@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MODELO DE USUÁRIO
+// ============================================
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  cpf       String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pedidos Pedido[]
+}
+
+// ============================================
+// MODELO DE CATEGORIA
+// ============================================
+model Categoria {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  descricao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produtos Produto[]
+}
+
+// ============================================
+// MODELO DE PRODUTO
+// ============================================
+model Produto {
+  id          String   @id @default(cuid())
+  nome        String   @unique
+  descricao   String?
+  preco       Float
+  quantidade  Int
+  categoriaId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  pedidoItens PedidoItem[]
+}
+
+// ============================================
+// MODELO DE PEDIDO
+// ============================================
+model Pedido {
+  id        String   @id @default(cuid())
+  userId    String
+  status    String   @default("pendente")
+  total     Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itens PedidoItem[]
+}
+
+// ============================================
+// MODELO DE ITEM DO PEDIDO
+// ============================================
+model PedidoItem {
+  id        String   @id @default(cuid())
+  pedidoId  String
+  produtoId String
+  quantidade Int
+  preco     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+}
