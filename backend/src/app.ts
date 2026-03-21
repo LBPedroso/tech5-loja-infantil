@@ -11,8 +11,23 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean)
+  : ["http://localhost:5173"];
+
 // Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origem não permitida pelo CORS"));
+    },
+  })
+);
 app.use(express.json());
 
 // Rotas

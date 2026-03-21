@@ -13,6 +13,7 @@ frontend/src/**/*.js
 # Logs
 *.log
 npm-debug.log*
+*.zip
 
 # OS / Editor
 .DS_Store
