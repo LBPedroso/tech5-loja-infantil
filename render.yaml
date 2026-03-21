@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: tech5-loja-infantil-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install; npm run prisma:generate; npm run build; npm run prisma:deploy; npm run prisma:seed
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: file:./prisma/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://SEU_FRONTEND.vercel.app
+      - key: ADMIN_NAME
+        value: Administrador Lili&Gu
+      - key: ADMIN_EMAIL
+        value: admin@liligu.com
+      - key: ADMIN_CPF
+        value: "52998224725"
+      - key: ADMIN_PASSWORD
+        value: Admin123!

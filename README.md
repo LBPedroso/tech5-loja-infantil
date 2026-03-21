@@ -92,3 +92,33 @@ npm run build
 
 ## Repositorio
 https://github.com/LBPedroso/tech5-loja-infantil.git
+
+## Deploy (Entrega Final)
+### Backend no Render
+1. No Render, crie um Web Service a partir do repositorio.
+2. Configure o Root Directory como backend.
+3. Use Build Command:
+  npm install; npm run prisma:generate; npm run build; npm run prisma:deploy; npm run prisma:seed
+4. Use Start Command:
+  npm run start
+5. Configure as variaveis de ambiente com base em backend/.env.example.
+
+### Frontend no Vercel
+1. No Vercel, importe o mesmo repositorio.
+2. Configure Root Directory como frontend.
+3. Configure VITE_API_URL com a URL publica do backend + /api.
+4. O arquivo frontend/vercel.json ja inclui rewrite para rotas do React.
+
+## Dados para Entrega Final
+- URL do repositorio: https://github.com/LBPedroso/tech5-loja-infantil.git
+- URL frontend online: preencher apos deploy
+- URL backend online: preencher apos deploy
+- Usuario admin: admin@liligu.com
+- Senha admin: Admin123!
+
+## Checklist de Envio Final
+- ZIP do projeto (sem node_modules/dist/.git)
+- Link do repositorio
+- Link do site online
+- Usuario e senha do administrador
+- Texto de explicacao da elaboracao do projeto
