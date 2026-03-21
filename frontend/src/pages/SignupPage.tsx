@@ -71,8 +71,8 @@ const SignupPage: React.FC = () => {
   return (
     <div className="container" style={{ maxWidth: '400px', marginTop: '50px' }}>
       <div className="card">
-        <h2 style={{ marginBottom: '8px' }}>Loja de Roupas Infantis</h2>
-        <p style={{ marginBottom: '12px' }}>Crie sua conta para administrar o estoque infantil.</p>
+        <h2 style={{ marginBottom: '8px' }}>Lili&Gu Moda Infantil</h2>
+        <p style={{ marginBottom: '12px' }}>Crie sua conta para administrar o estoque de roupas infantis.</p>
         <h1>Criar Conta</h1>
         {error && <div className="error">{error}</div>}
         

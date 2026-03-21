@@ -427,7 +427,7 @@ const DashboardPage: React.FC = () => {
   return (
     <div>
       <nav className="nav">
-        <div><h2>Tech 5 - Loja de Roupas Infantis</h2></div>
+        <div><h2>Lili&Gu Moda Infantil</h2></div>
         <div>
           <span>Bem-vindo, {user?.nome}</span>
           <button onClick={handleLogout} style={{ marginLeft: '20px' }}>
@@ -439,7 +439,7 @@ const DashboardPage: React.FC = () => {
       <div className="container">
         <div className="card">
           <h1>Dashboard</h1>
-          <p>Bem-vindo ao sistema da sua loja de roupas infantis.</p>
+          <p>Bem-vindo ao sistema da Lili&Gu Moda Infantil.</p>
           
           <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
             <button onClick={() => setActiveTab('dashboard')}>
@@ -462,7 +462,7 @@ const DashboardPage: React.FC = () => {
           <div style={{ marginTop: '20px' }}>
             {activeTab === 'dashboard' && (
               <div>
-                <h2>Painel da Loja Infantil</h2>
+                <h2>Painel da Lili&Gu</h2>
                 <p>Seus dados cadastrados:</p>
                 <ul>
                   <li><strong>Nome:</strong> {user?.nome}</li>

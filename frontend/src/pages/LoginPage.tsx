@@ -28,8 +28,8 @@ const LoginPage: React.FC = () => {
   return (
     <div className="container" style={{ maxWidth: '400px', marginTop: '50px' }}>
       <div className="card">
-        <h2 style={{ marginBottom: '8px' }}>Loja de Roupas Infantis</h2>
-        <p style={{ marginBottom: '12px' }}>Acesse sua conta para gerenciar produtos e pedidos infantis.</p>
+        <h2 style={{ marginBottom: '8px' }}>Lili&Gu Moda Infantil</h2>
+        <p style={{ marginBottom: '12px' }}>Acesse sua conta para gerenciar o catalogo infantil da loja.</p>
         <h1>Login</h1>
         {error && <div className="error">{error}</div>}
         
