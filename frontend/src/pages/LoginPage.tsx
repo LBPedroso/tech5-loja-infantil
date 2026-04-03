@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { emailRegex } from '../utils/validators'
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -13,13 +14,27 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!emailRegex.test(email.trim())) {
+      setError('Informe um email válido')
+      return
+    }
+
     setLoading(true)
 
     try {
       await login(email, senha)
       navigate('/dashboard')
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao fazer login')
+    } catch (err: unknown) {
+      const responseData = (err as {
+        response?: {
+          data?: {
+            error?: string
+          }
+        }
+      }).response?.data
+
+      setError(responseData?.error || 'Erro ao fazer login')
     } finally {
       setLoading(false)
     }

@@ -35,14 +35,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [fetchCurrentUser]);
 
   const signup = useCallback(async (nome: string, email: string, cpf: string, senha: string) => {
-    const response = await api.post('/auth/signup', { nome, email, cpf, senha });
-    const { token: newToken } = response.data.data;
-    
-    setToken(newToken);
-    localStorage.setItem('token', newToken);
-
-    await fetchCurrentUser(newToken);
-  }, [fetchCurrentUser]);
+    await api.post('/auth/signup', { nome, email, cpf, senha });
+  }, []);
 
   const logout = useCallback(() => {
     setUser(null);

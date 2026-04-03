@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import { Categoria, Pedido, Produto } from '../types'
+import { isValidCpf, passwordRules } from '../utils/validators'
 
 const DashboardPage: React.FC = () => {
   const { user, logout, editUser } = useAuth()
@@ -21,6 +22,8 @@ const DashboardPage: React.FC = () => {
   const [loadingCategorias, setLoadingCategorias] = useState(false)
   const [categoriaError, setCategoriaError] = useState('')
   const [categoriaSuccess, setCategoriaSuccess] = useState('')
+  const [categoriaPage, setCategoriaPage] = useState(1)
+  const [categoriaPages, setCategoriaPages] = useState(1)
 
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [produtoNome, setProdutoNome] = useState('')
@@ -32,6 +35,8 @@ const DashboardPage: React.FC = () => {
   const [loadingProdutos, setLoadingProdutos] = useState(false)
   const [produtoError, setProdutoError] = useState('')
   const [produtoSuccess, setProdutoSuccess] = useState('')
+  const [produtoPage, setProdutoPage] = useState(1)
+  const [produtoPages, setProdutoPages] = useState(1)
 
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [pedidoProdutoId, setPedidoProdutoId] = useState('')
@@ -40,12 +45,17 @@ const DashboardPage: React.FC = () => {
   const [loadingPedidos, setLoadingPedidos] = useState(false)
   const [pedidoError, setPedidoError] = useState('')
   const [pedidoSuccess, setPedidoSuccess] = useState('')
+  const [pedidoPage, setPedidoPage] = useState(1)
+  const [pedidoPages, setPedidoPages] = useState(1)
 
   const [perfilNome, setPerfilNome] = useState('')
   const [perfilCpf, setPerfilCpf] = useState('')
   const [perfilSenha, setPerfilSenha] = useState('')
+  const [perfilSenhaConfirm, setPerfilSenhaConfirm] = useState('')
   const [perfilError, setPerfilError] = useState('')
   const [perfilSuccess, setPerfilSuccess] = useState('')
+
+  const pageSize = 10
 
   const extractApiError = (error: unknown, fallback: string) => {
     const responseData = (error as {
@@ -64,15 +74,15 @@ const DashboardPage: React.FC = () => {
     return validationMessage || responseData?.error || fallback
   }
 
-  const loadCategorias = async () => {
+  const loadCategorias = async (page: number = categoriaPage) => {
     setLoadingCategorias(true)
     setCategoriaError('')
 
     try {
       const response = await api.get('/categorias', {
         params: {
-          page: 1,
-          limit: 50,
+          page,
+          limit: pageSize,
         },
       })
 
@@ -84,6 +94,8 @@ const DashboardPage: React.FC = () => {
           : []
 
       setCategorias(categoriasData)
+      setCategoriaPage(payload?.page || page)
+      setCategoriaPages(payload?.pages || 1)
     } catch (error: unknown) {
       setCategoriaError(extractApiError(error, 'Erro ao carregar categorias'))
     } finally {
@@ -95,17 +107,17 @@ const DashboardPage: React.FC = () => {
     if (activeTab === 'categorias') {
       loadCategorias()
     }
-  }, [activeTab])
+  }, [activeTab, categoriaPage])
 
-  const loadProdutos = async () => {
+  const loadProdutos = async (page: number = produtoPage, limit: number = pageSize) => {
     setLoadingProdutos(true)
     setProdutoError('')
 
     try {
       const response = await api.get('/produtos', {
         params: {
-          page: 1,
-          limit: 50,
+          page,
+          limit,
         },
       })
 
@@ -117,6 +129,8 @@ const DashboardPage: React.FC = () => {
           : []
 
       setProdutos(produtosData)
+      setProdutoPage(payload?.page || page)
+      setProdutoPages(payload?.pages || 1)
     } catch (error: unknown) {
       setProdutoError(extractApiError(error, 'Erro ao carregar produtos'))
     } finally {
@@ -124,15 +138,15 @@ const DashboardPage: React.FC = () => {
     }
   }
 
-  const loadPedidos = async () => {
+  const loadPedidos = async (page: number = pedidoPage) => {
     setLoadingPedidos(true)
     setPedidoError('')
 
     try {
       const response = await api.get('/pedidos', {
         params: {
-          page: 1,
-          limit: 50,
+          page,
+          limit: pageSize,
         },
       })
 
@@ -144,6 +158,8 @@ const DashboardPage: React.FC = () => {
           : []
 
       setPedidos(pedidosData)
+      setPedidoPage(payload?.page || page)
+      setPedidoPages(payload?.pages || 1)
       setPedidoStatusEdit(
         pedidosData.reduce((acc: Record<string, string>, pedido: Pedido) => {
           acc[pedido.id] = pedido.status
@@ -164,10 +180,10 @@ const DashboardPage: React.FC = () => {
     }
 
     if (activeTab === 'pedidos') {
-      loadProdutos()
+      loadProdutos(1, 100)
       loadPedidos()
     }
-  }, [activeTab])
+  }, [activeTab, produtoPage, pedidoPage])
 
   useEffect(() => {
     setPerfilNome(user?.nome || '')
@@ -400,15 +416,31 @@ const DashboardPage: React.FC = () => {
     }
 
     const cpfLimpo = perfilCpf.replace(/\D/g, '')
-    if (cpfLimpo.length !== 11) {
-      setPerfilError('CPF deve ter 11 dígitos')
+    if (!isValidCpf(cpfLimpo)) {
+      setPerfilError('CPF inválido')
       return
     }
 
+    const novaSenha = perfilSenha.trim()
+    const confirmacaoSenha = perfilSenhaConfirm.trim()
+
+    if (novaSenha || confirmacaoSenha) {
+      if (novaSenha !== confirmacaoSenha) {
+        setPerfilError('A confirmação da senha não confere')
+        return
+      }
+
+      if (!passwordRules.test(novaSenha)) {
+        setPerfilError('Senha deve ter 8+ caracteres, 1 maiúscula, 1 número e 1 especial (!@#$%^&*)')
+        return
+      }
+    }
+
     try {
-      await editUser(perfilNome.trim(), cpfLimpo, perfilSenha.trim() || undefined)
+      await editUser(perfilNome.trim(), cpfLimpo, novaSenha || undefined)
       setPerfilSuccess('Perfil atualizado com sucesso')
       setPerfilSenha('')
+      setPerfilSenhaConfirm('')
     } catch (error: unknown) {
       setPerfilError(extractApiError(error, 'Erro ao atualizar perfil'))
     }
@@ -538,6 +570,23 @@ const DashboardPage: React.FC = () => {
                       </tbody>
                     </table>
                   )}
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      disabled={categoriaPage <= 1 || loadingCategorias}
+                      onClick={() => setCategoriaPage((prev) => Math.max(1, prev - 1))}
+                    >
+                      Anterior
+                    </button>
+                    <span>Página {categoriaPage} de {categoriaPages}</span>
+                    <button
+                      type="button"
+                      disabled={categoriaPage >= categoriaPages || loadingCategorias}
+                      onClick={() => setCategoriaPage((prev) => Math.min(categoriaPages, prev + 1))}
+                    >
+                      Próxima
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -642,6 +691,23 @@ const DashboardPage: React.FC = () => {
                       </tbody>
                     </table>
                   )}
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      disabled={produtoPage <= 1 || loadingProdutos}
+                      onClick={() => setProdutoPage((prev) => Math.max(1, prev - 1))}
+                    >
+                      Anterior
+                    </button>
+                    <span>Página {produtoPage} de {produtoPages}</span>
+                    <button
+                      type="button"
+                      disabled={produtoPage >= produtoPages || loadingProdutos}
+                      onClick={() => setProdutoPage((prev) => Math.min(produtoPages, prev + 1))}
+                    >
+                      Próxima
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -733,6 +799,23 @@ const DashboardPage: React.FC = () => {
                       </tbody>
                     </table>
                   )}
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      disabled={pedidoPage <= 1 || loadingPedidos}
+                      onClick={() => setPedidoPage((prev) => Math.max(1, prev - 1))}
+                    >
+                      Anterior
+                    </button>
+                    <span>Página {pedidoPage} de {pedidoPages}</span>
+                    <button
+                      type="button"
+                      disabled={pedidoPage >= pedidoPages || loadingPedidos}
+                      onClick={() => setPedidoPage((prev) => Math.min(pedidoPages, prev + 1))}
+                    >
+                      Próxima
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -764,6 +847,12 @@ const DashboardPage: React.FC = () => {
                     placeholder="Nova senha (opcional)"
                     value={perfilSenha}
                     onChange={(e) => setPerfilSenha(e.target.value)}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirmar nova senha"
+                    value={perfilSenhaConfirm}
+                    onChange={(e) => setPerfilSenhaConfirm(e.target.value)}
                   />
                   <button type="submit">Salvar perfil</button>
                 </form>

@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-
-const passwordRules = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/
+import { emailRegex, isValidCpf, passwordRules } from '../utils/validators'
 
 const SignupPage: React.FC = () => {
   const [nome, setNome] = useState('')
@@ -24,8 +23,13 @@ const SignupPage: React.FC = () => {
       return
     }
 
-    if (cpf.length !== 11) {
-      setError('CPF deve ter 11 dígitos')
+    if (!emailRegex.test(email.trim())) {
+      setError('Informe um email válido')
+      return
+    }
+
+    if (!isValidCpf(cpf)) {
+      setError('CPF inválido')
       return
     }
 
@@ -42,8 +46,8 @@ const SignupPage: React.FC = () => {
     setLoading(true)
 
     try {
-      await signup(nome, email, cpf, senha)
-      navigate('/dashboard')
+      await signup(nome.trim(), email.trim(), cpf, senha)
+      navigate('/login')
     } catch (err: unknown) {
       const responseData = (err as {
         response?: {
