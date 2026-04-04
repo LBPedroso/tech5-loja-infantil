@@ -14,16 +14,9 @@ router.post(
   authMiddleware,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { nome, descricao, preco, quantidade, categoriaId } =
-        produtoSchema.parse(req.body);
+      const dto = produtoSchema.parse(req.body);
 
-      const produto = await produtoService.create(
-        nome,
-        descricao,
-        preco,
-        quantidade,
-        categoriaId
-      );
+      const produto = await produtoService.create(dto);
 
       res.status(201).json({
         success: true,
@@ -56,8 +49,8 @@ router.post(
   }
 );
 
-// GET /produtos - Listar produtos com paginação
-router.get("/", async (req: Request, res: Response): Promise<void> => {
+// GET /produtos - Listar produtos com paginação (autenticado)
+router.get("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 10 } = paginationSchema.parse({
       page: req.query.page ? parseInt(req.query.page as string) : 1,
@@ -87,9 +80,10 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// GET /produtos/:id - Obter produto por ID
+// GET /produtos/:id - Obter produto por ID (autenticado)
 router.get(
   "/:id",
+  authMiddleware,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const produto = await produtoService.getById(String(req.params.id));
@@ -120,16 +114,11 @@ router.put(
   authMiddleware,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { nome, descricao, preco, quantidade, categoriaId } =
-        produtoSchema.parse(req.body);
+      const dto = produtoSchema.parse(req.body);
 
       const produto = await produtoService.update(
         String(req.params.id),
-        nome,
-        descricao,
-        preco,
-        quantidade,
-        categoriaId
+        dto
       );
 
       res.status(200).json({

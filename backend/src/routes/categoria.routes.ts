@@ -49,8 +49,8 @@ router.post(
   }
 );
 
-// GET /categorias - Listar categorias com paginação
-router.get("/", async (req: Request, res: Response): Promise<void> => {
+// GET /categorias - Listar categorias com paginação (autenticado)
+router.get("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 10 } = paginationSchema.parse({
       page: req.query.page ? parseInt(req.query.page as string) : 1,
@@ -78,9 +78,10 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// GET /categorias/:id - Obter categoria por ID
+// GET /categorias/:id - Obter categoria por ID (autenticado)
 router.get(
   "/:id",
+  authMiddleware,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const categoria = await categoriaService.getById(String(req.params.id));
