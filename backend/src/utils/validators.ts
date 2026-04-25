@@ -50,6 +50,7 @@ export const produtoSchema = z.object({
   nome: z.string().min(3, "Nome do produto deve ter pelo menos 3 caracteres"),
   descricao: z.string().optional(),
   preco: z.number().positive("Preço deve ser maior que zero"),
+  custo: z.number().nonnegative("Custo não pode ser negativo"),
   quantidade: z.number().int().nonnegative("Quantidade não pode ser negativa"),
   categoriaId: z.string().min(1, "Categoria é obrigatória"),
 });

@@ -96,6 +96,7 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
               <th>Nome</th>
               <th>Categoria</th>
               <th>Preço</th>
+              <th>Custo</th>
               <th>Estoque</th>
               <th>Ações</th>
             </tr>
@@ -106,6 +107,7 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
                 <td>{prod.nome}</td>
                 <td>{prod.categoria?.nome || '-'}</td>
                 <td>{formatCurrency(prod.preco)}</td>
+                <td>{formatCurrency(prod.custo)}</td>
                 <td>{prod.quantidade}</td>
                 <td style={{ display: 'flex', gap: '8px' }}>
                   <button type="button" onClick={() => onEditar(prod)}>Editar</button>

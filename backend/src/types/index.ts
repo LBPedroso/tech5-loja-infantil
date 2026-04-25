@@ -62,6 +62,7 @@ export interface ProdutoDto {
   nome: string;
   descricao: string | null;
   preco: number;
+  custo: number;
   quantidade: number;
   categoriaId: string;
   categoria?: CategoriaDto;
@@ -112,6 +113,7 @@ export interface ProdutoInputDto {
   nome: string;
   descricao?: string;
   preco: number;
+  custo: number;
   quantidade: number;
   categoriaId: string;
 }
@@ -151,6 +153,7 @@ export interface FinanceiroResumoDto {
   totalSaidas: number;
   saldo: number;
   faturamentoMensal: number;
+  custoProdutosMensal: number;
   lucroLiquidoMensal: number;
   ticketMedioMensal: number;
   totalVendasMensal: number;

@@ -59,6 +59,7 @@ model Produto {
   nome        String   @unique
   descricao   String?
   preco       Float
+  custo       Float    @default(0)
   quantidade  Int
   categoriaId String
   createdAt   DateTime @default(now())

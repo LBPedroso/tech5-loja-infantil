@@ -18,6 +18,7 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
   const [nome, setNome] = useState(produto?.nome || '')
   const [descricao, setDescricao] = useState(produto?.descricao || '')
   const [preco, setPreco] = useState(produto ? String(produto.preco) : '')
+  const [custo, setCusto] = useState(produto ? String(produto.custo) : '')
   const [quantidade, setQuantidade] = useState(produto ? String(produto.quantidade) : '')
   const [categoriaId, setCategoriaId] = useState(produto?.categoriaId || '')
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -43,8 +44,10 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
     if (!categoriaId) { setError('Selecione uma categoria'); return }
 
     const precoNum = Number(preco)
+    const custoNum = Number(custo)
     const quantidadeNum = Number(quantidade)
     if (!Number.isFinite(precoNum) || precoNum <= 0) { setError('Preço deve ser maior que zero'); return }
+    if (!Number.isFinite(custoNum) || custoNum < 0) { setError('Custo não pode ser negativo'); return }
     if (!Number.isInteger(quantidadeNum) || quantidadeNum < 0) { setError('Quantidade inválida'); return }
 
     try {
@@ -52,6 +55,7 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
         nome: nome.trim(),
         descricao: descricao.trim() || undefined,
         preco: precoNum,
+        custo: custoNum,
         quantidade: quantidadeNum,
         categoriaId,
       }
@@ -77,6 +81,7 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
         <input type="text" placeholder="Nome do produto" value={nome} onChange={(e) => setNome(e.target.value)} required />
         <textarea placeholder="Descrição (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} />
         <input type="number" step="0.01" min="0.01" placeholder="Preço (R$)" value={preco} onChange={(e) => setPreco(e.target.value)} required />
+        <input type="number" step="0.01" min="0" placeholder="Custo (R$)" value={custo} onChange={(e) => setCusto(e.target.value)} required />
         <input type="number" min="0" step="1" placeholder="Quantidade em estoque" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} required />
         <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
           <option value="">Selecione a categoria</option>

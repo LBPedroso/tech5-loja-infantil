@@ -27,6 +27,7 @@ export interface Produto {
   nome: string;
   descricao?: string;
   preco: number;
+  custo: number;
   quantidade: number;
   categoriaId: string;
   categoria: Categoria;
@@ -89,6 +90,7 @@ export interface FinanceiroResumo {
   totalSaidas: number;
   saldo: number;
   faturamentoMensal: number;
+  custoProdutosMensal: number;
   lucroLiquidoMensal: number;
   ticketMedioMensal: number;
   totalVendasMensal: number;

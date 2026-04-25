@@ -58,6 +58,11 @@ const HomeSection: React.FC = () => {
         </article>
 
         <article className="home-stat">
+          <p className="home-stat-label">Custo produtos vendidos (mês)</p>
+          <p className="home-stat-value">{resumo ? formatCurrency(resumo.custoProdutosMensal) : '-'}</p>
+        </article>
+
+        <article className="home-stat">
           <p className="home-stat-label">Ticket medio mensal</p>
           <p className="home-stat-value">{resumo ? formatCurrency(resumo.ticketMedioMensal) : '-'}</p>
         </article>
