@@ -34,6 +34,16 @@ export interface Produto {
   updatedAt: string;
 }
 
+export interface Cliente {
+  id: string;
+  nome: string;
+  telefone?: string;
+  email?: string;
+  observacoes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PedidoItem {
   id: string;
   pedidoId: string;
@@ -46,9 +56,11 @@ export interface PedidoItem {
 export interface Pedido {
   id: string;
   userId: string;
+  clienteId?: string | null;
   status: string;
   total: number;
   itens: PedidoItem[];
+  cliente?: Cliente | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -7,18 +7,29 @@ const prisma = new PrismaClient();
 const PEDIDO_INCLUDE = {
   itens: { include: { produto: true } },
   user: { select: { id: true, email: true, name: true } },
+  cliente: true,
 } as const;
 
 type PedidoWithUser = {
-  id: string; userId: string; total: number; status: string;
+  id: string; userId: string; clienteId: string | null; total: number; status: string;
   createdAt: Date; updatedAt: Date;
   itens: Array<{ id: string; pedidoId: string; produtoId: string; quantidade: number; preco: number; produto: unknown }>;
   user: { id: string; email: string; name: string };
+  cliente: null | {
+    id: string;
+    nome: string;
+    telefone: string | null;
+    email: string | null;
+    observacoes: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
 };
 
 const mapPedido = (pedido: PedidoWithUser): PedidoDto => ({
   ...(pedido as unknown as PedidoDto),
   user: { id: pedido.user.id, email: pedido.user.email, nome: pedido.user.name },
+  cliente: pedido.cliente,
 });
 
 export class PedidoService {
@@ -49,12 +60,20 @@ export class PedidoService {
     return pedido as unknown as PedidoWithUser;
   }
 
+  private async validarCliente(clienteId?: string): Promise<void> {
+    if (!clienteId) return;
+
+    const cliente = await prisma.cliente.findUnique({ where: { id: clienteId } });
+    if (!cliente) throw new AppError(404, "Cliente não encontrado");
+  }
+
   // Criar pedido
-  async create(userId: string, itens: PedidoItemInput[]): Promise<PedidoDto> {
+  async create(userId: string, itens: PedidoItemInput[], clienteId?: string): Promise<PedidoDto> {
     const itensValidados = await Promise.all(itens.map((i) => this.validarItem(i)));
+    await this.validarCliente(clienteId);
     const total = this.calcularTotal(itensValidados);
     const pedido = await prisma.pedido.create({
-      data: { userId, total, itens: { create: itensValidados } },
+      data: { userId, clienteId, total, itens: { create: itensValidados } },
       include: PEDIDO_INCLUDE,
     });
     await this.atualizarEstoque(itens, "decrement");

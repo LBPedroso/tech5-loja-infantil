@@ -54,8 +54,16 @@ export const produtoSchema = z.object({
   categoriaId: z.string().min(1, "Categoria é obrigatória"),
 });
 
+export const clienteSchema = z.object({
+  nome: z.string().min(3, "Nome do cliente deve ter pelo menos 3 caracteres"),
+  telefone: z.string().min(8, "Telefone deve ter pelo menos 8 caracteres").optional(),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  observacoes: z.string().optional(),
+});
+
 // Schema de pedido
 export const pedidoSchema = z.object({
+  clienteId: z.string().optional(),
   itens: z.array(
     z.object({
       produtoId: z.string(),

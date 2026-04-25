@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import api from '../../services/api'
-import { Produto } from '../../types'
+import { Cliente, Produto } from '../../types'
 import AlertMessage from '../ui/AlertMessage'
 
 interface PedidoFormProps {
@@ -10,6 +10,8 @@ interface PedidoFormProps {
 
 const PedidoForm: React.FC<PedidoFormProps> = ({ onSalvar, onCancelar }) => {
   const [produtos, setProdutos] = useState<Produto[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [clienteId, setClienteId] = useState('')
   const [produtoId, setProdutoId] = useState('')
   const [quantidade, setQuantidade] = useState('1')
   const [error, setError] = useState('')
@@ -21,6 +23,14 @@ const PedidoForm: React.FC<PedidoFormProps> = ({ onSalvar, onCancelar }) => {
         const payload = res.data?.data
         const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
         setProdutos(data)
+      })
+      .catch(() => {})
+
+    api.get('/clientes', { params: { page: 1, limit: 100 } })
+      .then((res) => {
+        const payload = res.data?.data
+        const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+        setClientes(data)
       })
       .catch(() => {})
   }, [])
@@ -37,7 +47,7 @@ const PedidoForm: React.FC<PedidoFormProps> = ({ onSalvar, onCancelar }) => {
     if (!Number.isInteger(qtd) || qtd <= 0) { setError('Quantidade deve ser um inteiro maior que zero'); return }
 
     try {
-      await api.post('/pedidos', { itens: [{ produtoId, quantidade: qtd }] })
+      await api.post('/pedidos', { clienteId: clienteId || undefined, itens: [{ produtoId, quantidade: qtd }] })
       setSuccess('Pedido criado com sucesso')
       setTimeout(onSalvar, 500)
     } catch (err: unknown) {
@@ -52,6 +62,14 @@ const PedidoForm: React.FC<PedidoFormProps> = ({ onSalvar, onCancelar }) => {
       <AlertMessage type="error" message={error} />
       <AlertMessage type="success" message={success} />
       <form onSubmit={handleSubmit} style={{ maxWidth: '500px', marginTop: '16px' }}>
+        <select value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
+          <option value="">Pedido sem cliente vinculado</option>
+          {clientes.map((cliente) => (
+            <option key={cliente.id} value={cliente.id}>
+              {cliente.nome}{cliente.telefone ? ` - ${cliente.telefone}` : ''}
+            </option>
+          ))}
+        </select>
         <select value={produtoId} onChange={(e) => setProdutoId(e.target.value)} required>
           <option value="">Selecione o produto</option>
           {produtosComEstoque.map((prod) => (

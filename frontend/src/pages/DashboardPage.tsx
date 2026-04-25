@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import HomeSection from '../components/HomeSection'
 import CategoriasSection from '../components/categorias/CategoriasSection'
+import ClientesSection from '../components/clientes/ClientesSection'
 import ProdutosSection from '../components/produtos/ProdutosSection'
 import PedidosSection from '../components/pedidos/PedidosSection'
 import PerfilForm from '../components/perfil/PerfilForm'
 
-type TabName = 'dashboard' | 'categorias' | 'produtos' | 'pedidos' | 'perfil'
+type TabName = 'dashboard' | 'clientes' | 'categorias' | 'produtos' | 'pedidos' | 'perfil'
 
 const TABS: Array<{ key: TabName; label: string }> = [
   { key: 'dashboard', label: 'Home' },
+  { key: 'clientes', label: 'Clientes' },
   { key: 'categorias', label: 'Categorias' },
   { key: 'produtos', label: 'Produtos' },
   { key: 'pedidos', label: 'Pedidos' },
@@ -28,7 +30,7 @@ const DashboardPage: React.FC = () => {
   }
 
   const summaryCards = [
-    { title: 'Modulos ativos', value: '5', tone: 'teal' },
+    { title: 'Modulos ativos', value: '6', tone: 'teal' },
     { title: 'Status do sistema', value: 'Online', tone: 'green' },
     { title: 'Perfil logado', value: user?.nome || '-', tone: 'blue' },
     { title: 'Ambiente', value: 'Producao', tone: 'purple' },
@@ -79,6 +81,7 @@ const DashboardPage: React.FC = () => {
 
         <div className="card workspace-card">
           {activeTab === 'dashboard' && <HomeSection />}
+          {activeTab === 'clientes' && <ClientesSection />}
           {activeTab === 'categorias' && <CategoriasSection />}
           {activeTab === 'produtos' && <ProdutosSection />}
           {activeTab === 'pedidos' && <PedidosSection />}

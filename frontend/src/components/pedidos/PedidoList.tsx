@@ -82,6 +82,7 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Cliente</th>
               <th>Total</th>
               <th>Status</th>
               <th>Criado em</th>
@@ -93,6 +94,7 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
             {pedidos.map((pedido) => (
               <tr key={pedido.id}>
                 <td>{pedido.id.slice(0, 8)}...</td>
+                <td>{pedido.cliente?.nome || 'Sem cliente'}</td>
                 <td>{formatCurrency(pedido.total)}</td>
                 <td>
                   <select

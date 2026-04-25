@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/auth.routes";
 import categoriaRoutes from "./routes/categoria.routes";
+import clienteRoutes from "./routes/cliente.routes";
 import produtoRoutes from "./routes/produto.routes";
 import pedidoRoutes from "./routes/pedido.routes";
 
@@ -37,6 +38,7 @@ app.use(express.json());
 // Rotas
 app.use("/api/auth", authRoutes);
 app.use("/api/categorias", categoriaRoutes);
+app.use("/api/clientes", clienteRoutes);
 app.use("/api/produtos", produtoRoutes);
 app.use("/api/pedidos", pedidoRoutes);
 

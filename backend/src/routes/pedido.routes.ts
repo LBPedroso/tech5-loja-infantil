@@ -18,9 +18,9 @@ router.post(
         throw new AppError(401, "Não autorizado");
       }
 
-      const { itens } = pedidoSchema.parse(req.body);
+      const { clienteId, itens } = pedidoSchema.parse(req.body);
 
-      const pedido = await pedidoService.create(req.user.id, itens);
+      const pedido = await pedidoService.create(req.user.id, itens, clienteId);
 
       res.status(201).json({
         success: true,

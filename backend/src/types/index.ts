@@ -69,6 +69,16 @@ export interface ProdutoDto {
   updatedAt: Date;
 }
 
+export interface ClienteDto {
+  id: string;
+  nome: string;
+  telefone: string | null;
+  email: string | null;
+  observacoes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface UserSummary {
   id: string;
   email: string;
@@ -87,10 +97,12 @@ export interface PedidoItemDto {
 export interface PedidoDto {
   id: string;
   userId: string;
+  clienteId?: string | null;
   total: number;
   status: string;
   itens: PedidoItemDto[];
   user?: UserSummary;
+  cliente?: ClienteDto | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -107,4 +119,11 @@ export interface ProdutoInputDto {
 export interface PedidoItemInput {
   produtoId: string;
   quantidade: number;
+}
+
+export interface ClienteInputDto {
+  nome: string;
+  telefone?: string;
+  email?: string;
+  observacoes?: string;
 }
