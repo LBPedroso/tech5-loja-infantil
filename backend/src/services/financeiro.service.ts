@@ -47,7 +47,7 @@ export class FinanceiroService {
     const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
     const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
 
-    const [entradasGeral, saidasGeral, entradasMes, saidasMes] = await Promise.all([
+    const [entradasGeral, saidasGeral, entradasMes, saidasMes, vendasMes] = await Promise.all([
       prisma.transacao.aggregate({ where: { userId, tipo: "ENTRADA" }, _sum: { valor: true } }),
       prisma.transacao.aggregate({ where: { userId, tipo: "SAIDA" }, _sum: { valor: true } }),
       prisma.transacao.aggregate({
@@ -58,17 +58,34 @@ export class FinanceiroService {
         where: { userId, tipo: "SAIDA", data: { gte: inicioMes, lte: fimMes } },
         _sum: { valor: true },
       }),
+      prisma.pedido.aggregate({
+        where: {
+          userId,
+          status: { in: ["ENTREGUE", "entregue"] },
+          createdAt: { gte: inicioMes, lte: fimMes },
+        },
+        _sum: { total: true },
+        _count: { _all: true },
+      }),
     ]);
 
     const totalEntradas = entradasGeral._sum.valor ?? 0;
     const totalSaidas = saidasGeral._sum.valor ?? 0;
     const entMes = entradasMes._sum.valor ?? 0;
     const saiMes = saidasMes._sum.valor ?? 0;
+    const faturamentoMensal = vendasMes._sum.total ?? 0;
+    const totalVendasMensal = vendasMes._count._all;
+    const ticketMedioMensal = totalVendasMensal > 0 ? faturamentoMensal / totalVendasMensal : 0;
+    const lucroLiquidoMensal = faturamentoMensal - saiMes;
 
     return {
       totalEntradas,
       totalSaidas,
       saldo: totalEntradas - totalSaidas,
+      faturamentoMensal,
+      lucroLiquidoMensal,
+      ticketMedioMensal,
+      totalVendasMensal,
       mesAtual: { entradas: entMes, saidas: saiMes, saldo: entMes - saiMes },
     };
   }

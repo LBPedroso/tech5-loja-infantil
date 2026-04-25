@@ -88,6 +88,10 @@ export interface FinanceiroResumo {
   totalEntradas: number;
   totalSaidas: number;
   saldo: number;
+  faturamentoMensal: number;
+  lucroLiquidoMensal: number;
+  ticketMedioMensal: number;
+  totalVendasMensal: number;
   mesAtual: {
     entradas: number;
     saidas: number;

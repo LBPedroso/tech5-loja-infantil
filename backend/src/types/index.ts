@@ -150,6 +150,10 @@ export interface FinanceiroResumoDto {
   totalEntradas: number;
   totalSaidas: number;
   saldo: number;
+  faturamentoMensal: number;
+  lucroLiquidoMensal: number;
+  ticketMedioMensal: number;
+  totalVendasMensal: number;
   mesAtual: {
     entradas: number;
     saidas: number;
