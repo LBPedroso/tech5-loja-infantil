@@ -7,8 +7,9 @@ import ClientesSection from '../components/clientes/ClientesSection'
 import ProdutosSection from '../components/produtos/ProdutosSection'
 import PedidosSection from '../components/pedidos/PedidosSection'
 import PerfilForm from '../components/perfil/PerfilForm'
+import FinanceiroSection from '../components/financeiro/FinanceiroSection'
 
-type TabName = 'dashboard' | 'clientes' | 'categorias' | 'produtos' | 'pedidos' | 'perfil'
+type TabName = 'dashboard' | 'clientes' | 'categorias' | 'produtos' | 'pedidos' | 'financeiro' | 'perfil'
 
 const TABS: Array<{ key: TabName; label: string }> = [
   { key: 'dashboard', label: 'Home' },
@@ -16,6 +17,7 @@ const TABS: Array<{ key: TabName; label: string }> = [
   { key: 'categorias', label: 'Categorias' },
   { key: 'produtos', label: 'Produtos' },
   { key: 'pedidos', label: 'Pedidos' },
+  { key: 'financeiro', label: 'Financeiro' },
   { key: 'perfil', label: 'Meu Perfil' },
 ]
 
@@ -30,7 +32,7 @@ const DashboardPage: React.FC = () => {
   }
 
   const summaryCards = [
-    { title: 'Modulos ativos', value: '6', tone: 'teal' },
+    { title: 'Modulos ativos', value: '7', tone: 'teal' },
     { title: 'Status do sistema', value: 'Online', tone: 'green' },
     { title: 'Perfil logado', value: user?.nome || '-', tone: 'blue' },
     { title: 'Ambiente', value: 'Producao', tone: 'purple' },
@@ -85,6 +87,7 @@ const DashboardPage: React.FC = () => {
           {activeTab === 'categorias' && <CategoriasSection />}
           {activeTab === 'produtos' && <ProdutosSection />}
           {activeTab === 'pedidos' && <PedidosSection />}
+          {activeTab === 'financeiro' && <FinanceiroSection />}
           {activeTab === 'perfil' && <PerfilForm />}
         </div>
       </main>

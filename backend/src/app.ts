@@ -7,6 +7,7 @@ import categoriaRoutes from "./routes/categoria.routes";
 import clienteRoutes from "./routes/cliente.routes";
 import produtoRoutes from "./routes/produto.routes";
 import pedidoRoutes from "./routes/pedido.routes";
+import financeiroRoutes from "./routes/financeiro.routes";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/api/categorias", categoriaRoutes);
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/produtos", produtoRoutes);
 app.use("/api/pedidos", pedidoRoutes);
+app.use("/api/financeiro", financeiroRoutes);
 
 // Health check
 app.get("/health", (req, res) => {

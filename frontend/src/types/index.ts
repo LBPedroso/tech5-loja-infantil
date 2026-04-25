@@ -72,3 +72,25 @@ export interface PaginatedResponse<T> {
   limit: number;
   pages: number;
 }
+
+export interface Transacao {
+  id: string;
+  tipo: 'ENTRADA' | 'SAIDA';
+  valor: number;
+  descricao?: string | null;
+  data: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FinanceiroResumo {
+  totalEntradas: number;
+  totalSaidas: number;
+  saldo: number;
+  mesAtual: {
+    entradas: number;
+    saidas: number;
+    saldo: number;
+  };
+}

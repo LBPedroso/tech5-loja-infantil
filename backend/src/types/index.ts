@@ -127,3 +127,32 @@ export interface ClienteInputDto {
   email?: string;
   observacoes?: string;
 }
+
+export interface TransacaoDto {
+  id: string;
+  tipo: string;
+  valor: number;
+  descricao: string | null;
+  data: Date;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TransacaoInputDto {
+  tipo: string;
+  valor: number;
+  descricao?: string;
+  data?: string;
+}
+
+export interface FinanceiroResumoDto {
+  totalEntradas: number;
+  totalSaidas: number;
+  saldo: number;
+  mesAtual: {
+    entradas: number;
+    saidas: number;
+    saldo: number;
+  };
+}
