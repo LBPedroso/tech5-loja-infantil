@@ -15,7 +15,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: https://SEU_FRONTEND.vercel.app
+        value: https://tech5-loja-infantil.vercel.app,http://localhost:5173
       - key: ADMIN_NAME
         value: Administrador Lili&Gu
       - key: ADMIN_EMAIL

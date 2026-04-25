@@ -11,15 +11,19 @@ dotenv.config();
 
 const app = express();
 
+const normalizeOrigin = (value: string): string => value.trim().replace(/\/$/, "");
+
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean)
+  ? process.env.CORS_ORIGIN.split(",").map(normalizeOrigin).filter(Boolean)
   : ["http://localhost:5173"];
 
 // Middlewares
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const requestOrigin = origin ? normalizeOrigin(origin) : "";
+
+      if (!origin || allowedOrigins.includes(requestOrigin)) {
         callback(null, true);
         return;
       }
