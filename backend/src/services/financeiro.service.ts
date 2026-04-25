@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, Transacao } from "@prisma/client";
 import { AppError } from "../utils/errors";
 import {
   FinanceiroResumoDto,
@@ -9,13 +9,25 @@ import {
 
 const prisma = new PrismaClient();
 
+const mapTransacao = (transacao: Transacao): TransacaoDto => ({
+  id: transacao.id,
+  tipo: transacao.tipo,
+  valor: transacao.valor,
+  descricao: transacao.descricao,
+  data: transacao.data,
+  userId: transacao.userId,
+  createdAt: transacao.createdAt,
+  updatedAt: transacao.updatedAt,
+});
+
 export class FinanceiroService {
   // Criar transação
   async create(userId: string, dto: TransacaoInputDto): Promise<TransacaoDto> {
     const data = dto.data ? new Date(dto.data) : new Date();
-    return (await prisma.transacao.create({
+    const transacao = await prisma.transacao.create({
       data: { tipo: dto.tipo, valor: dto.valor, descricao: dto.descricao, data, userId },
-    })) as unknown as TransacaoDto;
+    });
+    return mapTransacao(transacao);
   }
 
   // Listar transações com paginação e filtro de tipo
@@ -26,14 +38,14 @@ export class FinanceiroService {
     tipo?: string
   ): Promise<PaginatedResponse<TransacaoDto>> {
     const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = { userId };
+    const where: Prisma.TransacaoWhereInput = { userId };
     if (tipo) where.tipo = tipo;
     const [transacoes, total] = await Promise.all([
       prisma.transacao.findMany({ where, skip, take: limit, orderBy: { data: "desc" } }),
       prisma.transacao.count({ where }),
     ]);
     return {
-      data: transacoes as unknown as TransacaoDto[],
+      data: transacoes.map(mapTransacao),
       total,
       page,
       limit,
@@ -110,6 +122,7 @@ export class FinanceiroService {
     const t = await prisma.transacao.findUnique({ where: { id } });
     if (!t) throw new AppError(404, "Transação não encontrada");
     if (t.userId !== userId) throw new AppError(403, "Sem permissão");
-    return (await prisma.transacao.delete({ where: { id } })) as unknown as TransacaoDto;
+    const transacao = await prisma.transacao.delete({ where: { id } });
+    return mapTransacao(transacao);
   }
 }

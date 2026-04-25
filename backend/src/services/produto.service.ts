@@ -1,14 +1,37 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/errors";
 import { PaginatedResponse, ProdutoDto, ProdutoInputDto } from "../types";
 
 const prisma = new PrismaClient();
 
+type ProdutoComCategoria = Prisma.ProdutoGetPayload<{ include: { categoria: true } }>;
+
+const mapProduto = (produto: ProdutoComCategoria): ProdutoDto => ({
+  id: produto.id,
+  nome: produto.nome,
+  descricao: produto.descricao,
+  preco: produto.preco,
+  custo: produto.custo,
+  quantidade: produto.quantidade,
+  categoriaId: produto.categoriaId,
+  categoria: produto.categoria
+    ? {
+        id: produto.categoria.id,
+        nome: produto.categoria.nome,
+        descricao: produto.categoria.descricao,
+        createdAt: produto.categoria.createdAt,
+        updatedAt: produto.categoria.updatedAt,
+      }
+    : undefined,
+  createdAt: produto.createdAt,
+  updatedAt: produto.updatedAt,
+});
+
 export class ProdutoService {
   private async buscarPorId(id: string): Promise<ProdutoDto> {
     const produto = await prisma.produto.findUnique({ where: { id }, include: { categoria: true } });
     if (!produto) throw new AppError(404, "Produto não encontrado");
-    return produto as unknown as ProdutoDto;
+    return mapProduto(produto);
   }
 
   private async garantirCategoriaExiste(categoriaId: string): Promise<void> {
@@ -25,20 +48,21 @@ export class ProdutoService {
   async create(dto: ProdutoInputDto): Promise<ProdutoDto> {
     await this.garantirCategoriaExiste(dto.categoriaId);
     await this.verificarNomeDisponivel(dto.nome, "");
-    return await prisma.produto.create({ data: dto, include: { categoria: true } }) as unknown as ProdutoDto;
+    const produto = await prisma.produto.create({ data: dto, include: { categoria: true } });
+    return mapProduto(produto);
   }
 
   // Listar produtos com paginação e busca
   async list(page: number = 1, limit: number = 10, categoriaId?: string, busca?: string): Promise<PaginatedResponse<ProdutoDto>> {
     const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = {};
+    const where: Prisma.ProdutoWhereInput = {};
     if (categoriaId) where.categoriaId = categoriaId;
     if (busca) where.nome = { contains: busca };
     const [produtos, total] = await Promise.all([
       prisma.produto.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" }, include: { categoria: true } }),
       prisma.produto.count({ where }),
     ]);
-    return { data: produtos as unknown as ProdutoDto[], total, page, limit, pages: Math.ceil(total / limit) };
+    return { data: produtos.map(mapProduto), total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   // Obter produto por ID
@@ -51,12 +75,14 @@ export class ProdutoService {
     await this.buscarPorId(id);
     await this.garantirCategoriaExiste(dto.categoriaId);
     await this.verificarNomeDisponivel(dto.nome, id);
-    return await prisma.produto.update({ where: { id }, data: dto, include: { categoria: true } }) as unknown as ProdutoDto;
+    const produto = await prisma.produto.update({ where: { id }, data: dto, include: { categoria: true } });
+    return mapProduto(produto);
   }
 
   // Deletar produto
   async delete(id: string): Promise<ProdutoDto> {
     await this.buscarPorId(id);
-    return await prisma.produto.delete({ where: { id } }) as unknown as ProdutoDto;
+    const produto = await prisma.produto.delete({ where: { id }, include: { categoria: true } });
+    return mapProduto(produto);
   }
 }

@@ -1,43 +1,67 @@
 # Manual de Uso - Lili&Gu Moda Infantil
 
 ## 1. Objetivo
-Este manual descreve como acessar e operar o sistema web da loja, incluindo login, cadastros e fluxo basico de vendas (pedidos).
+Este manual descreve o uso do sistema administrativo da loja, cobrindo autenticacao, cadastro de usuarios, clientes, categorias, produtos, pedidos e financeiro.
 
-## 2. Acesso ao sistema
-- Frontend (site): https://tech5-loja-infantil.vercel.app/
+## 2. Ambientes
+- Frontend: https://tech5-loja-infantil.vercel.app/
 - Backend (API): https://tech5-loja-infantil-api.onrender.com
-- Health check da API: https://tech5-loja-infantil-api.onrender.com/health
+- Health check: https://tech5-loja-infantil-api.onrender.com/health
 
 ## 3. Credenciais de administrador
 - Email: admin@liligu.com
 - Senha: Admin123!
 
 ## 4. Fluxo recomendado de uso
-1. Acesse o frontend e faca login.
-2. Cadastre categorias (ex.: Bodies, Conjuntos, Vestidos).
-3. Cadastre produtos vinculando cada item a uma categoria.
-4. Crie pedidos selecionando produto e quantidade.
-5. Atualize status do pedido quando necessario.
-6. Atualize dados no menu de perfil quando precisar.
+1. Entrar no sistema com email e senha.
+2. Cadastrar categorias.
+3. Cadastrar produtos com preco, custo e estoque.
+4. Cadastrar clientes (opcional, mas recomendado).
+5. Criar pedidos e vincular cliente quando necessario.
+6. Atualizar status dos pedidos para ENTREGUE quando finalizados.
+7. Lancar entradas e saidas no modulo Financeiro.
+8. Acompanhar Home/Relatorio Financeiro e conferir lucro do mes.
 
 ## 5. Modulos disponiveis
-- Home/Dashboard: visao geral e dados do usuario autenticado.
-- Categorias: criar, listar, editar, excluir.
-- Produtos: criar, listar, editar, excluir.
-- Pedidos: criar, listar, atualizar status, excluir.
-- Meu Perfil: editar nome, CPF e senha.
+- Home: dados do usuario + relatorio financeiro mensal.
+- Clientes: CRUD completo com paginacao.
+- Categorias: CRUD completo com paginacao.
+- Produtos: CRUD completo com paginacao, busca por nome e campo de custo.
+- Pedidos: CRUD completo com paginacao, filtro por status e vinculo opcional a cliente.
+- Financeiro: transacoes de ENTRADA/SAIDA, resumo geral e mensal.
+- Meu Perfil: edicao de nome, CPF e senha.
 
-## 6. Regras importantes
-- Produtos exigem categoria existente.
-- Pedido so pode ser criado se houver estoque suficiente.
-- Alteracoes de pedido impactam estoque.
-- Rotas de escrita exigem token de autenticacao.
+## 6. Regras de negocio principais
+- Autenticacao com JWT; rotas protegidas exigem token valido.
+- Senha de usuario e armazenada criptografada.
+- CPF e email sao validados no cadastro e edicao.
+- Email nao pode ser alterado na edicao de perfil.
+- Pedido so e criado com estoque suficiente.
+- Estoque e atualizado automaticamente ao criar/excluir pedidos.
+- Lucro liquido mensal considera:
+  - faturamento mensal de pedidos ENTREGUES
+  - menos custo dos produtos vendidos no mes
+  - menos saidas lancadas no financeiro
 
-## 7. Solucao rapida de problemas
-- Erro 401/403: fazer login novamente.
-- Erro de CORS em producao: revisar CORS_ORIGIN no backend.
-- Site fora do ar: verificar status de deploy no Render e no Vercel.
+## 7. Filtros e consultas uteis
+- Produtos: busca por nome.
+- Pedidos: filtro por status.
+- Financeiro: filtro por tipo (ENTRADA/SAIDA).
 
-## 8. Referencias
+## 8. Solucao rapida de problemas
+- Erro 401/403: entrar novamente para renovar sessao.
+- Erro de CORS em producao: conferir CORS_ORIGIN no Render.
+- Deploy sem refletir mudancas de banco: conferir migrations no repositorio e no deploy logs.
+- Dados financeiros zerados: verificar se existem pedidos ENTREGUES no mes e transacoes cadastradas.
+
+## 9. Checklist de envio da atividade
+1. Confirmar backend sem erros: `npx tsc --noEmit`.
+2. Confirmar frontend buildando: `npm run build`.
+3. Confirmar testes: `npm test` no backend.
+4. Gerar ZIP sem `node_modules`, `.git` e `dist`.
+5. Validar tamanho final do ZIP (limite 150 MB).
+6. Enviar link do repositorio + ZIP da entrega.
+
+## 10. Referencias
 - Repositorio: https://github.com/LBPedroso/tech5-loja-infantil.git
-- Documento principal: README.md
+- Guia tecnico: README.md

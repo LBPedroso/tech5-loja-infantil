@@ -10,8 +10,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
-    "test": "vitest run src/__tests__/validations.test.ts",
-    "test:watch": "vitest src/__tests__/validations.test.ts"
+    "test": "vitest run src/__tests__/**/*.test.ts",
+    "test:watch": "vitest src/__tests__/**/*.test.ts"
   },
   "keywords": [],
   "author": "",

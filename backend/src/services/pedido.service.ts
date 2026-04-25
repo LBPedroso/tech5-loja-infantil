@@ -1,4 +1,4 @@
-﻿import { PrismaClient } from "@prisma/client";
+﻿import { Prisma, PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/errors";
 import { PaginatedResponse, PedidoDto, PedidoItemInput } from "../types";
 
@@ -10,26 +10,46 @@ const PEDIDO_INCLUDE = {
   cliente: true,
 } as const;
 
-type PedidoWithUser = {
-  id: string; userId: string; clienteId: string | null; total: number; status: string;
-  createdAt: Date; updatedAt: Date;
-  itens: Array<{ id: string; pedidoId: string; produtoId: string; quantidade: number; preco: number; produto: unknown }>;
-  user: { id: string; email: string; name: string };
-  cliente: null | {
-    id: string;
-    nome: string;
-    telefone: string | null;
-    email: string | null;
-    observacoes: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-};
+type PedidoWithUser = Prisma.PedidoGetPayload<{ include: typeof PEDIDO_INCLUDE }>;
 
 const mapPedido = (pedido: PedidoWithUser): PedidoDto => ({
-  ...(pedido as unknown as PedidoDto),
+  id: pedido.id,
+  userId: pedido.userId,
+  clienteId: pedido.clienteId,
+  total: pedido.total,
+  status: pedido.status,
+  createdAt: pedido.createdAt,
+  updatedAt: pedido.updatedAt,
+  itens: pedido.itens.map((item) => ({
+    id: item.id,
+    pedidoId: item.pedidoId,
+    produtoId: item.produtoId,
+    quantidade: item.quantidade,
+    preco: item.preco,
+    produto: {
+      id: item.produto.id,
+      nome: item.produto.nome,
+      descricao: item.produto.descricao,
+      preco: item.produto.preco,
+      custo: item.produto.custo,
+      quantidade: item.produto.quantidade,
+      categoriaId: item.produto.categoriaId,
+      createdAt: item.produto.createdAt,
+      updatedAt: item.produto.updatedAt,
+    },
+  })),
   user: { id: pedido.user.id, email: pedido.user.email, nome: pedido.user.name },
-  cliente: pedido.cliente,
+  cliente: pedido.cliente
+    ? {
+        id: pedido.cliente.id,
+        nome: pedido.cliente.nome,
+        telefone: pedido.cliente.telefone,
+        email: pedido.cliente.email,
+        observacoes: pedido.cliente.observacoes,
+        createdAt: pedido.cliente.createdAt,
+        updatedAt: pedido.cliente.updatedAt,
+      }
+    : null,
 });
 
 export class PedidoService {
@@ -55,9 +75,9 @@ export class PedidoService {
 
   private async buscarPedidoAutorizado(id: string, userId: string): Promise<PedidoWithUser> {
     const pedido = await prisma.pedido.findUnique({ where: { id }, include: PEDIDO_INCLUDE });
-    if (!pedido) throw new AppError(404, "Pedido nÃ£o encontrado");
+    if (!pedido) throw new AppError(404, "Pedido nao encontrado");
     if (pedido.userId !== userId) throw new AppError(403, "Acesso proibido");
-    return pedido as unknown as PedidoWithUser;
+    return pedido;
   }
 
   private async validarCliente(clienteId?: string): Promise<void> {
@@ -77,22 +97,22 @@ export class PedidoService {
       include: PEDIDO_INCLUDE,
     });
     await this.atualizarEstoque(itens, "decrement");
-    return mapPedido(pedido as unknown as PedidoWithUser);
+    return mapPedido(pedido);
   }
 
   // Listar pedidos do usuário com paginação e filtro de status
   async list(userId: string, page: number = 1, limit: number = 10, status?: string): Promise<PaginatedResponse<PedidoDto>> {
     const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = { userId };
+    const where: Prisma.PedidoWhereInput = { userId };
     if (status) where.status = status;
     const [pedidos, total] = await Promise.all([
       prisma.pedido.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" }, include: PEDIDO_INCLUDE }),
       prisma.pedido.count({ where }),
     ]);
-    return { data: (pedidos as unknown as PedidoWithUser[]).map(mapPedido), total, page, limit, pages: Math.ceil(total / limit) };
+    return { data: pedidos.map(mapPedido), total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  // Obter pedido por ID (apenas do prÃ³prio usuÃ¡rio)
+  // Obter pedido por ID (apenas do proprio usuario)
   async getById(id: string, userId: string): Promise<PedidoDto> {
     return mapPedido(await this.buscarPedidoAutorizado(id, userId));
   }
@@ -101,15 +121,18 @@ export class PedidoService {
   async updateStatus(id: string, userId: string, status: string): Promise<PedidoDto> {
     await this.buscarPedidoAutorizado(id, userId);
     const atualizado = await prisma.pedido.update({ where: { id }, data: { status }, include: PEDIDO_INCLUDE });
-    return mapPedido(atualizado as unknown as PedidoWithUser);
+    return mapPedido(atualizado);
   }
 
-  // Deletar pedido (apenas do prÃ³prio usuÃ¡rio)
+  // Deletar pedido (apenas do proprio usuario)
   async delete(id: string, userId: string): Promise<PedidoDto> {
     const pedido = await prisma.pedido.findUnique({ where: { id }, include: { itens: true } });
-    if (!pedido) throw new AppError(404, "Pedido nÃ£o encontrado");
+    if (!pedido) throw new AppError(404, "Pedido nao encontrado");
     if (pedido.userId !== userId) throw new AppError(403, "Acesso proibido");
     await this.atualizarEstoque(pedido.itens, "increment");
-    return await prisma.pedido.delete({ where: { id } }) as unknown as PedidoDto;
+
+    const pedidoCompleto = await this.buscarPedidoAutorizado(id, userId);
+    await prisma.pedido.delete({ where: { id } });
+    return mapPedido(pedidoCompleto);
   }
 }
