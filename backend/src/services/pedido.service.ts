@@ -80,12 +80,14 @@ export class PedidoService {
     return mapPedido(pedido as unknown as PedidoWithUser);
   }
 
-  // Listar pedidos do usuÃ¡rio com paginaÃ§Ã£o
-  async list(userId: string, page: number = 1, limit: number = 10): Promise<PaginatedResponse<PedidoDto>> {
+  // Listar pedidos do usuário com paginação e filtro de status
+  async list(userId: string, page: number = 1, limit: number = 10, status?: string): Promise<PaginatedResponse<PedidoDto>> {
     const skip = (page - 1) * limit;
+    const where: Record<string, unknown> = { userId };
+    if (status) where.status = status;
     const [pedidos, total] = await Promise.all([
-      prisma.pedido.findMany({ where: { userId }, skip, take: limit, orderBy: { createdAt: "desc" }, include: PEDIDO_INCLUDE }),
-      prisma.pedido.count({ where: { userId } }),
+      prisma.pedido.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" }, include: PEDIDO_INCLUDE }),
+      prisma.pedido.count({ where }),
     ]);
     return { data: (pedidos as unknown as PedidoWithUser[]).map(mapPedido), total, page, limit, pages: Math.ceil(total / limit) };
   }

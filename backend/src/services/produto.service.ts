@@ -28,10 +28,12 @@ export class ProdutoService {
     return await prisma.produto.create({ data: dto, include: { categoria: true } }) as unknown as ProdutoDto;
   }
 
-  // Listar produtos com paginação
-  async list(page: number = 1, limit: number = 10, categoriaId?: string): Promise<PaginatedResponse<ProdutoDto>> {
+  // Listar produtos com paginação e busca
+  async list(page: number = 1, limit: number = 10, categoriaId?: string, busca?: string): Promise<PaginatedResponse<ProdutoDto>> {
     const skip = (page - 1) * limit;
-    const where = categoriaId ? { categoriaId } : {};
+    const where: Record<string, unknown> = {};
+    if (categoriaId) where.categoriaId = categoriaId;
+    if (busca) where.nome = { contains: busca };
     const [produtos, total] = await Promise.all([
       prisma.produto.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" }, include: { categoria: true } }),
       prisma.produto.count({ where }),

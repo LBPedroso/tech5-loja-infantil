@@ -64,8 +64,9 @@ router.get("/", authMiddleware, async (req: Request, res: Response): Promise<voi
       page: req.query.page ? parseInt(req.query.page as string) : 1,
       limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
     });
+    const status = req.query.status as string | undefined;
 
-    const result = await pedidoService.list(req.user.id, page, limit);
+    const result = await pedidoService.list(req.user.id, page, limit, status);
 
     res.status(200).json({
       success: true,

@@ -14,17 +14,21 @@ const formatCurrency = (v: number) =>
 
 const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
   const [produtos, setProdutos] = useState<Produto[]>([])
+  const [busca, setBusca] = useState('')
+  const [buscaAtiva, setBuscaAtiva] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const loadProdutos = useCallback(async (pageNum: number) => {
+  const loadProdutos = useCallback(async (pageNum: number, termoBusca: string) => {
     setLoading(true)
     setError('')
     try {
-      const res = await api.get('/produtos', { params: { page: pageNum, limit: 10 } })
+      const params: Record<string, unknown> = { page: pageNum, limit: 10 }
+      if (termoBusca) params.busca = termoBusca
+      const res = await api.get('/produtos', { params })
       const payload = res.data?.data
       const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
       setProdutos(data)
@@ -37,7 +41,19 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
     }
   }, [])
 
-  useEffect(() => { loadProdutos(page) }, [page, loadProdutos])
+  useEffect(() => { loadProdutos(page, buscaAtiva) }, [page, buscaAtiva, loadProdutos])
+
+  const handleBuscar = (e: React.FormEvent) => {
+    e.preventDefault()
+    setPage(1)
+    setBuscaAtiva(busca.trim())
+  }
+
+  const handleLimpar = () => {
+    setBusca('')
+    setBuscaAtiva('')
+    setPage(1)
+  }
 
   const handleExcluir = async (id: string) => {
     setError('')
@@ -45,7 +61,7 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
     try {
       await api.delete(`/produtos/${id}`)
       setSuccess('Produto excluído com sucesso')
-      loadProdutos(page)
+      loadProdutos(page, buscaAtiva)
     } catch {
       setError('Erro ao excluir produto')
     }
@@ -55,9 +71,20 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
     <div>
       <AlertMessage type="error" message={error} />
       <AlertMessage type="success" message={success} />
-      <button type="button" onClick={onNovo} style={{ marginBottom: '16px' }}>
-        + Novo Produto
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" onClick={onNovo}>+ Novo Produto</button>
+        <form onSubmit={handleBuscar} style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '220px' }}>
+          <input
+            type="text"
+            placeholder="Buscar por nome..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            style={{ marginBottom: 0 }}
+          />
+          <button type="submit" style={{ whiteSpace: 'nowrap' }}>Buscar</button>
+          {buscaAtiva && <button type="button" onClick={handleLimpar} style={{ whiteSpace: 'nowrap', background: '#aaa' }}>Limpar</button>}
+        </form>
+      </div>
       {loading ? (
         <p>Carregando produtos...</p>
       ) : produtos.length === 0 ? (

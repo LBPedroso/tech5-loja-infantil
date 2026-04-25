@@ -16,17 +16,20 @@ const formatDate = (v: string) => new Date(v).toLocaleString('pt-BR')
 const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [statusEdit, setStatusEdit] = useState<Record<string, string>>({})
+  const [filtroStatus, setFiltroStatus] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const loadPedidos = useCallback(async (pageNum: number) => {
+  const loadPedidos = useCallback(async (pageNum: number, status: string) => {
     setLoading(true)
     setError('')
     try {
-      const res = await api.get('/pedidos', { params: { page: pageNum, limit: 10 } })
+      const params: Record<string, unknown> = { page: pageNum, limit: 10 }
+      if (status) params.status = status
+      const res = await api.get('/pedidos', { params })
       const payload = res.data?.data
       const data: Pedido[] = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
       setPedidos(data)
@@ -40,7 +43,12 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
     }
   }, [])
 
-  useEffect(() => { loadPedidos(page) }, [page, loadPedidos])
+  useEffect(() => { loadPedidos(page, filtroStatus) }, [page, filtroStatus, loadPedidos])
+
+  const handleFiltro = (novoStatus: string) => {
+    setFiltroStatus(novoStatus)
+    setPage(1)
+  }
 
   const handleAtualizarStatus = async (id: string) => {
     setError('')
@@ -48,7 +56,7 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
     try {
       await api.put(`/pedidos/${id}/status`, { status: statusEdit[id] || 'PENDENTE' })
       setSuccess('Status atualizado com sucesso')
-      loadPedidos(page)
+      loadPedidos(page, filtroStatus)
     } catch {
       setError('Erro ao atualizar status')
     }
@@ -60,7 +68,7 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
     try {
       await api.delete(`/pedidos/${id}`)
       setSuccess('Pedido excluído com sucesso')
-      loadPedidos(page)
+      loadPedidos(page, filtroStatus)
     } catch {
       setError('Erro ao excluir pedido')
     }
@@ -70,9 +78,20 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
     <div>
       <AlertMessage type="error" message={error} />
       <AlertMessage type="success" message={success} />
-      <button type="button" onClick={onNovo} style={{ marginBottom: '16px' }}>
-        + Novo Pedido
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" onClick={onNovo}>+ Novo Pedido</button>
+        <select
+          value={filtroStatus}
+          onChange={(e) => handleFiltro(e.target.value)}
+          style={{ marginBottom: 0 }}
+        >
+          <option value="">Todos os status</option>
+          <option value="PENDENTE">PENDENTE</option>
+          <option value="PROCESSANDO">PROCESSANDO</option>
+          <option value="ENTREGUE">ENTREGUE</option>
+          <option value="CANCELADO">CANCELADO</option>
+        </select>
+      </div>
       {loading ? (
         <p>Carregando pedidos...</p>
       ) : pedidos.length === 0 ? (

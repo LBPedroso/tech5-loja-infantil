@@ -58,8 +58,9 @@ router.get("/", authMiddleware, async (req: Request, res: Response): Promise<voi
     });
 
     const categoriaId = req.query.categoriaId as string | undefined;
+    const busca = req.query.busca as string | undefined;
 
-    const result = await produtoService.list(page, limit, categoriaId);
+    const result = await produtoService.list(page, limit, categoriaId, busca);
 
     res.status(200).json({
       success: true,
