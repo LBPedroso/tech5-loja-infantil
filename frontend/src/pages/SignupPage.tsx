@@ -73,11 +73,12 @@ const SignupPage: React.FC = () => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '400px', marginTop: '50px' }}>
-      <div className="card">
-        <h2 style={{ marginBottom: '8px' }}>Lili&Gu Moda Infantil</h2>
-        <p style={{ marginBottom: '12px' }}>Crie sua conta para administrar o estoque de roupas infantis.</p>
-        <h1>Criar Conta</h1>
+    <div className="auth-shell">
+      <div className="card auth-card">
+        <span className="auth-kicker">Novo Acesso</span>
+        <h2 className="brand-title auth-title">Lili&Gu Moda Infantil</h2>
+        <p className="auth-subtitle">Crie sua conta para administrar o estoque de roupas infantis.</p>
+        <h1 style={{ marginBottom: '10px' }}>Criar Conta</h1>
         {error && <div className="error">{error}</div>}
         
         <form onSubmit={handleSubmit}>
@@ -122,7 +123,7 @@ const SignupPage: React.FC = () => {
           </button>
         </form>
 
-        <p style={{ marginTop: '20px', textAlign: 'center' }}>
+        <p className="auth-footer">
           Já tem conta? <Link to="/login">Fazer login</Link>
         </p>
       </div>

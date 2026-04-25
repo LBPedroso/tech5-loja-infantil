@@ -27,33 +27,64 @@ const DashboardPage: React.FC = () => {
     navigate('/login')
   }
 
+  const summaryCards = [
+    { title: 'Modulos ativos', value: '5', tone: 'teal' },
+    { title: 'Status do sistema', value: 'Online', tone: 'green' },
+    { title: 'Perfil logado', value: user?.nome || '-', tone: 'blue' },
+    { title: 'Ambiente', value: 'Producao', tone: 'purple' },
+  ]
+
+  const currentTabLabel = TABS.find((tab) => tab.key === activeTab)?.label || 'Painel'
+
   return (
-    <div>
-      <nav className="nav">
-        <div><h2>Lili&amp;Gu Moda Infantil</h2></div>
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
         <div>
-          <span>Bem-vindo, {user?.nome}</span>
-          <button onClick={handleLogout} style={{ marginLeft: '20px' }}>Sair</button>
+          <h2 className="brand-title sidebar-title">Lili&amp;Gu</h2>
+          <p className="sidebar-subtitle">Painel administrativo</p>
         </div>
-      </nav>
 
-      <div className="container">
-        <div className="card">
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            {TABS.map((tab) => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <nav className="sidebar-menu" aria-label="Navegacao principal">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              className={`menu-button${activeTab === tab.key ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
 
+        <div className="sidebar-footer">
+          <p>Bem-vindo, {user?.nome}</p>
+          <button className="logout-btn" onClick={handleLogout}>Sair</button>
+        </div>
+      </aside>
+
+      <main className="admin-main">
+        <header className="topbar">
+          <h1 className="page-title">Resumo da loja</h1>
+          <p className="page-subtitle">Visao geral e operacao do modulo: {currentTabLabel}</p>
+        </header>
+
+        <section className="summary-grid">
+          {summaryCards.map((card) => (
+            <article key={card.title} className="summary-card">
+              <p className="summary-label">{card.title}</p>
+              <p className={`summary-value ${card.tone}`}>{card.value}</p>
+            </article>
+          ))}
+        </section>
+
+        <div className="card workspace-card">
           {activeTab === 'dashboard' && <HomeSection />}
           {activeTab === 'categorias' && <CategoriasSection />}
           {activeTab === 'produtos' && <ProdutosSection />}
           {activeTab === 'pedidos' && <PedidosSection />}
           {activeTab === 'perfil' && <PerfilForm />}
         </div>
-      </div>
+      </main>
     </div>
   )
 }
