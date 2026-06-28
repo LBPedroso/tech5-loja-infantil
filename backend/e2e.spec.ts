@@ -24,8 +24,9 @@ test.describe('Authentication', () => {
 
     expect(response.status()).toBe(200);
     const data = await response.json();
-    expect(data).toHaveProperty('token');
-    expect(data.user.email).toBe('test@example.com');
+    expect(data).toHaveProperty('data');
+    expect(data.data).toHaveProperty('token');
+    expect(data.data.user.email).toBe('test@example.com');
   });
 
   test('should fail login with invalid credentials', async ({ request }) => {
