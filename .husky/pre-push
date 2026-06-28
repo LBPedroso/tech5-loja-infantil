@@ -1,0 +1,4 @@
+#!/bin/sh
+echo '==> Executando testes E2E antes do push...'
+cd backend && npx playwright test --reporter=list
+echo '==> Todos os testes passaram!'
