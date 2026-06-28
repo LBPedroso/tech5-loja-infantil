@@ -1,0 +1,21 @@
+{
+  "name": "tech-5",
+  "version": "1.0.0",
+  "description": "Projeto fullstack para gestao de loja de roupas infantis, inspirado nos nomes dos filhos do autor (Lili e Gu).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LBPedroso/tech5-loja-infantil.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LBPedroso/tech5-loja-infantil/issues"
+  },
+  "homepage": "https://github.com/LBPedroso/tech5-loja-infantil#readme"
+}

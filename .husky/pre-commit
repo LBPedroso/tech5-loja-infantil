@@ -1,0 +1,4 @@
+#!/bin/sh
+echo '==> Verificando build antes do commit...'
+cd backend && npm run build
+echo '==> Build OK!'
