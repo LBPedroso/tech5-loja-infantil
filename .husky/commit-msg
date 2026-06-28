@@ -1,0 +1,20 @@
+#!/bin/sh
+# Valida formato da mensagem de commit (Conventional Commits)
+# Formatos aceitos: type(scope): description  OU  type: description
+# Tipos: feat, fix, docs, style, refactor, test, chore, merge, perf, ci, build
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+PATTERN='^(feat|fix|docs|style|refactor|test|chore|merge|perf|ci|build)(\(.+\))?: .{5,}'
+
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo '==> ERRO: Mensagem de commit invalida!'
+  echo '==> Use o formato: type(scope): descricao'
+  echo '==> Tipos validos: feat, fix, docs, style, refactor, test, chore, merge, perf, ci, build'
+  echo '==> Exemplo: feat(auth): adiciona login com JWT'
+  exit 1
+fi
+
+echo '==> Mensagem de commit OK!'
+exit 0
