@@ -25,7 +25,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = useCallback(async (email: string, senha: string) => {
-    const response = await api.post('/auth/login', { email, senha });
+    const response = await api.post('/auth/login', { email, password: senha });
     const { token: newToken } = response.data.data;
     
     setToken(newToken);
@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [fetchCurrentUser]);
 
   const signup = useCallback(async (nome: string, email: string, cpf: string, senha: string) => {
-    await api.post('/auth/signup', { nome, email, cpf, senha });
+    await api.post('/auth/signup', { name: nome, email, password: senha });
   }, []);
 
   const logout = useCallback(() => {

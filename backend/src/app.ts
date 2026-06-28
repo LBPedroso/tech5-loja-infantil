@@ -36,7 +36,7 @@ app.post("/api/auth/login", (req: any, res: any) => {
   if (!user) {
     return res.status(401).json({ error: "Credenciais inválidas" });
   }
-  return res.json({ token: "mock-token-" + user.id, user });
+  return res.json({ data: { token: "mock-token-" + user.id, user } });
 });
 
 app.get("/api/auth/me", (req: any, res: any) => {
