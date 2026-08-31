@@ -48,13 +48,29 @@ Este manual descreve o uso do sistema administrativo da loja, cobrindo autentica
 - Pedidos: filtro por status.
 - Financeiro: filtro por tipo (ENTRADA/SAIDA).
 
-## 8. Solucao rapida de problemas
+## 8. Cadastro de foto do produto (galeria/camera)
+- No formulario de produto, use os botoes:
+  - `Escolher da galeria` para selecionar foto existente.
+  - `Tirar foto` para abrir a camera.
+- O sistema faz upload real no backend (multipart/form-data) e salva a URL da imagem no produto.
+- Regras de validacao da imagem:
+  - Extensoes aceitas: JPG, PNG, WEBP.
+  - Tamanho maximo: 3MB.
+  - Nome do arquivo: gerado automaticamente com identificador unico para evitar colisao.
+- Se a imagem for invalida, o sistema exibe mensagem de erro antes de salvar o produto.
+
+## 9. Solucao rapida de problemas
 - Erro 401/403: entrar novamente para renovar sessao.
 - Erro de CORS em producao: conferir CORS_ORIGIN no Render.
 - Deploy sem refletir mudancas de banco: conferir migrations no repositorio e no deploy logs.
 - Dados financeiros zerados: verificar se existem pedidos ENTREGUES no mes e transacoes cadastradas.
 
-## 9. Checklist de envio da atividade
+- Erro ao enviar foto:
+  - confirme se o arquivo tem ate 3MB;
+  - confirme se a extensao e JPG/PNG/WEBP;
+  - em celular, tente novamente via `Escolher da galeria`.
+
+## 10. Checklist de envio da atividade
 1. Confirmar backend sem erros: `npx tsc --noEmit`.
 2. Confirmar frontend buildando: `npm run build`.
 3. Confirmar testes: `npm test` no backend.
@@ -62,6 +78,6 @@ Este manual descreve o uso do sistema administrativo da loja, cobrindo autentica
 5. Validar tamanho final do ZIP (limite 150 MB).
 6. Enviar link do repositorio + ZIP da entrega.
 
-## 10. Referencias
+## 11. Referencias
 - Repositorio: https://github.com/LBPedroso/tech5-loja-infantil.git
 - Guia tecnico: README.md

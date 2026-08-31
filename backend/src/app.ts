@@ -1,15 +1,53 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import multer from "multer";
 import { env } from "./config/env";
 
 dotenv.config();
 
 const app = express();
 
+const uploadsRoot = path.resolve(__dirname, "../uploads");
+const productUploadsDir = path.join(uploadsRoot, "produtos");
+const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxImageSizeBytes = 3 * 1024 * 1024;
+
+if (!fs.existsSync(productUploadsDir)) {
+  fs.mkdirSync(productUploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, productUploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeExt = [".jpg", ".jpeg", ".png", ".webp"].includes(ext) ? ext : "";
+    const uniqueId = `${Date.now()}-${crypto.randomUUID()}`;
+    cb(null, `${uniqueId}${safeExt}`);
+  },
+});
+
+const uploadProdutoImage = multer({
+  storage,
+  limits: { fileSize: maxImageSizeBytes },
+  fileFilter: (_req, file, cb) => {
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      cb(new Error("Formato de imagem inválido. Use JPG, PNG ou WEBP."));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
 // Middlewares
 app.use(cors({ origin: env.corsOrigins }));
 app.use(express.json({ limit: "15mb" }));
+app.use("/uploads", express.static(uploadsRoot));
 
 // Mock data in-memory
 const users: any = [];
@@ -33,6 +71,54 @@ const ensureDefaultAdminUser = () => {
 };
 
 ensureDefaultAdminUser();
+
+const getUserByToken = (authorization?: string) => {
+  const token = authorization?.split(" ")[1];
+  if (!token) {
+    return null;
+  }
+
+  const userId = Number(String(token).replace("mock-token-", ""));
+  return users.find((u: any) => u.id === userId) || null;
+};
+
+app.post("/api/uploads/produtos", (req: any, res: any) => {
+  const user = getUserByToken(req.headers.authorization);
+  if (!user) {
+    return res.status(401).json({ success: false, error: "Não autorizado" });
+  }
+
+  uploadProdutoImage.single("imagem")(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({ success: false, error: "Imagem maior que 3MB" });
+      }
+      return res.status(400).json({ success: false, error: "Falha no upload da imagem" });
+    }
+
+    if (err instanceof Error) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+
+    const uploadedFile = req.file as Express.Multer.File | undefined;
+    if (!uploadedFile) {
+      return res.status(400).json({ success: false, error: "Arquivo de imagem não enviado" });
+    }
+
+    const url = `${req.protocol}://${req.get("host")}/uploads/produtos/${uploadedFile.filename}`;
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        url,
+        fileName: uploadedFile.filename,
+        size: uploadedFile.size,
+        mimeType: uploadedFile.mimetype,
+      },
+      message: "Upload realizado com sucesso",
+    });
+  });
+});
 
 // Auth endpoints
 app.post("/api/auth/signup", (req: any, res: any) => {

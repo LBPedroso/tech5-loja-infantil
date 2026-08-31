@@ -3,6 +3,7 @@
 
 # Build outputs
 **/dist/
+**/uploads/
 frontend/src/**/*.js
 
 # Environment files
