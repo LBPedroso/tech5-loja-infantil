@@ -30,11 +30,13 @@ const LoginPage: React.FC = () => {
         response?: {
           data?: {
             error?: string
+            message?: string
           }
         }
+        message?: string
       }).response?.data
 
-      setError(responseData?.error || 'Erro ao fazer login')
+      setError(responseData?.error || responseData?.message || (err as { message?: string }).message || 'Erro ao fazer login')
     } finally {
       setLoading(false)
     }

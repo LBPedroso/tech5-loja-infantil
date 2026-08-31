@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(async (email: string, senha: string) => {
     const response = await api.post('/auth/login', { email, senha });
     const newToken = response.data?.data?.token ?? response.data?.token;
+    const authData = response.data?.data ?? response.data;
 
     if (!newToken) {
       throw new Error('Token não retornado pela API');
@@ -35,7 +36,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(newToken);
     localStorage.setItem('token', newToken);
 
-    await fetchCurrentUser(newToken);
+    try {
+      await fetchCurrentUser(newToken);
+    } catch {
+      // Evita bloquear o login por instabilidade momentânea no endpoint /auth/me.
+      setUser((prev) =>
+        prev ?? {
+          id: authData?.id || 'temp-user',
+          email: authData?.email || email,
+          nome: authData?.nome || 'Usuário',
+          cpf: authData?.cpf || '',
+        }
+      );
+    }
   }, [fetchCurrentUser]);
 
   const signup = useCallback(async (nome: string, email: string, cpf: string, senha: string) => {
