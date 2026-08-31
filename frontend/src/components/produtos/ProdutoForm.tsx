@@ -224,7 +224,6 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
         <input
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleImageFileChange}
         />
         {uploadingImage && <p style={{ marginTop: '-6px', marginBottom: '4px' }}>Processando imagem...</p>}
