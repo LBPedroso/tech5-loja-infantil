@@ -434,6 +434,30 @@ form {
   font-weight: 700;
 }
 
+.produto-form-preview {
+  width: 100%;
+  max-width: 220px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #e8e3ef;
+  box-shadow: 0 6px 16px rgba(45, 42, 50, 0.12);
+}
+
+.produto-foto-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #dfd9ea;
+  background: #fff;
+}
+
+.produto-foto-placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;

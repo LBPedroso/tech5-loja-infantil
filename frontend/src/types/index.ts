@@ -26,11 +26,12 @@ export interface Produto {
   id: string;
   nome: string;
   descricao?: string;
+  imagemUrl?: string;
   preco: number;
   custo: number;
   quantidade: number;
-  categoriaId: string;
-  categoria: Categoria;
+  categoriaId?: string | null;
+  categoria?: Categoria | null;
   createdAt: string;
   updatedAt: string;
 }

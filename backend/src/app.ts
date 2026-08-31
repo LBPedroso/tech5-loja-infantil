@@ -8,7 +8,7 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 
 // Mock data in-memory
 const users: any = [];
@@ -16,27 +16,70 @@ const products: any = [];
 const categories: any = [];
 const orders: any = [];
 
+const ensureDefaultAdminUser = () => {
+  const adminEmail = "admin@liligu.com";
+  const exists = users.some((u: any) => u.email === adminEmail);
+
+  if (!exists) {
+    users.push({
+      id: Date.now(),
+      email: adminEmail,
+      senha: "Admin123!",
+      nome: "Administrador Lili&Gu",
+      cpf: "52998224725",
+    });
+  }
+};
+
+ensureDefaultAdminUser();
+
 // Auth endpoints
 app.post("/api/auth/signup", (req: any, res: any) => {
-  const { email, password, name } = req.body;
-  if (!email || !password || !name) {
+  const email = req.body.email;
+  const senha = req.body.senha || req.body.password;
+  const nome = req.body.nome || req.body.name;
+  const cpf = req.body.cpf || null;
+
+  if (!email || !senha || !nome) {
     return res.status(400).json({ error: "Campos obrigatórios" });
   }
-  const user = { id: Date.now(), email, password, name };
+
+  const alreadyExists = users.some((u: any) => u.email === email);
+  if (alreadyExists) {
+    return res.status(409).json({ error: "Email já cadastrado" });
+  }
+
+  const user = { id: Date.now(), email, senha, nome, cpf };
   users.push(user);
-  return res.status(201).json(user);
+  return res.status(201).json({
+    success: true,
+    data: { id: String(user.id), email: user.email },
+    message: "Usuário cadastrado com sucesso",
+  });
 });
 
 app.post("/api/auth/login", (req: any, res: any) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+  const email = req.body.email;
+  const senha = req.body.senha || req.body.password;
+
+  if (!email || !senha) {
     return res.status(400).json({ error: "Email e senha obrigatórios" });
   }
-  const user = users.find((u: any) => u.email === email && u.password === password);
+
+  const user = users.find((u: any) => u.email === email && u.senha === senha);
   if (!user) {
     return res.status(401).json({ error: "Credenciais inválidas" });
   }
-  return res.json({ data: { token: "mock-token-" + user.id, user } });
+
+  return res.json({
+    success: true,
+    data: {
+      id: String(user.id),
+      email: user.email,
+      token: "mock-token-" + user.id,
+    },
+    message: "Login realizado com sucesso",
+  });
 });
 
 app.get("/api/auth/me", (req: any, res: any) => {
@@ -44,7 +87,23 @@ app.get("/api/auth/me", (req: any, res: any) => {
   if (!token) {
     return res.status(401).json({ error: "Token não fornecido" });
   }
-  return res.json({ id: 1, email: "user@example.com", name: "User" });
+
+  const userId = Number(String(token).replace("mock-token-", ""));
+  const user = users.find((u: any) => u.id === userId);
+
+  if (!user) {
+    return res.status(401).json({ error: "Token inválido" });
+  }
+
+  return res.json({
+    success: true,
+    data: {
+      id: String(user.id),
+      email: user.email,
+      nome: user.nome,
+      cpf: user.cpf || "",
+    },
+  });
 });
 
 // Categorias endpoints
@@ -82,13 +141,31 @@ app.delete("/api/categorias/:id", (req: any, res: any) => {
 
 // Produtos endpoints
 app.get("/api/produtos", (req: any, res: any) => {
-  return res.json(products);
+  const busca = String(req.query.busca || "").trim().toLowerCase();
+  if (!busca) {
+    return res.json(products);
+  }
+
+  const filtered = products.filter((p: any) => String(p.nome || "").toLowerCase().includes(busca));
+  return res.json(filtered);
 });
 
 app.post("/api/produtos", (req: any, res: any) => {
-  const { nome, preco } = req.body;
+  const { nome, preco, custo, quantidade, categoriaId, descricao, imagemUrl } = req.body;
   if (!nome || !preco) return res.status(400).json({ error: "Nome e preço obrigatórios" });
-  const produto = { id: Date.now(), nome, preco };
+
+  const categoria = categories.find((c: any) => c.id.toString() === String(categoriaId));
+  const produto = {
+    id: Date.now(),
+    nome,
+    descricao: descricao || null,
+    imagemUrl: imagemUrl || null,
+    preco,
+    custo: custo ?? 0,
+    quantidade: quantidade ?? 0,
+    categoriaId: categoriaId || null,
+    categoria: categoria || null,
+  };
   products.push(produto);
   return res.status(201).json(produto);
 });
@@ -103,7 +180,18 @@ app.put("/api/produtos/:id", (req: any, res: any) => {
   const prod = products.find((p: any) => p.id.toString() === req.params.id);
   if (!prod) return res.status(404).json({ error: "Produto não encontrado" });
   prod.nome = req.body.nome || prod.nome;
-  prod.preco = req.body.preco || prod.preco;
+  prod.descricao = req.body.descricao ?? prod.descricao;
+  prod.imagemUrl = req.body.imagemUrl ?? prod.imagemUrl;
+  prod.preco = req.body.preco ?? prod.preco;
+  prod.custo = req.body.custo ?? prod.custo;
+  prod.quantidade = req.body.quantidade ?? prod.quantidade;
+  prod.categoriaId = req.body.categoriaId ?? prod.categoriaId;
+
+  if (req.body.categoriaId) {
+    const categoria = categories.find((c: any) => c.id.toString() === String(req.body.categoriaId));
+    prod.categoria = categoria || null;
+  }
+
   return res.json(prod);
 });
 

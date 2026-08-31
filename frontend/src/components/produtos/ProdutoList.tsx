@@ -12,6 +12,9 @@ interface ProdutoListProps {
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 
+const hasHttpImage = (value?: string): boolean =>
+  typeof value === 'string' && /^(https?:\/\/|data:image\/)/i.test(value)
+
 const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [busca, setBusca] = useState('')
@@ -93,6 +96,7 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
         <table className="table">
           <thead>
             <tr>
+              <th>Foto</th>
               <th>Nome</th>
               <th>Categoria</th>
               <th>Preço</th>
@@ -104,6 +108,13 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
           <tbody>
             {produtos.map((prod) => (
               <tr key={prod.id}>
+                <td>
+                  {hasHttpImage(prod.imagemUrl) ? (
+                    <img className="produto-foto-thumb" src={prod.imagemUrl} alt={`Foto do produto ${prod.nome}`} />
+                  ) : (
+                    <span className="produto-foto-placeholder">Sem foto</span>
+                  )}
+                </td>
                 <td>{prod.nome}</td>
                 <td>{prod.categoria?.nome || '-'}</td>
                 <td>{formatCurrency(prod.preco)}</td>

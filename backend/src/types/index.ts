@@ -61,6 +61,7 @@ export interface ProdutoDto {
   id: string;
   nome: string;
   descricao: string | null;
+  imagemUrl?: string | null;
   preco: number;
   custo: number;
   quantidade: number;
@@ -112,6 +113,7 @@ export interface PedidoDto {
 export interface ProdutoInputDto {
   nome: string;
   descricao?: string;
+  imagemUrl?: string;
   preco: number;
   custo: number;
   quantidade: number;
