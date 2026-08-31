@@ -15,6 +15,7 @@ const extractError = (err: unknown): string => {
 }
 
 const CATEGORIA_PADRAO_NOME = 'Sem categoria'
+const MAX_IMAGE_DATA_URL_LENGTH = 95_000
 
 const isValidImageUrl = (value: string): boolean => {
   if (!value.trim()) return true
@@ -42,6 +43,43 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.onerror = () => reject(new Error('Erro ao ler arquivo de imagem'))
     reader.readAsDataURL(file)
   })
+
+const loadImage = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Não foi possível processar a imagem'))
+    image.src = src
+  })
+
+const compressDataUrl = async (originalDataUrl: string): Promise<string> => {
+  const image = await loadImage(originalDataUrl)
+  const maxSide = 900
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height))
+  const width = Math.max(1, Math.round(image.width * scale))
+  const height = Math.max(1, Math.round(image.height * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) {
+    throw new Error('Não foi possível processar a imagem')
+  }
+
+  ctx.drawImage(image, 0, 0, width, height)
+
+  let quality = 0.82
+  let output = canvas.toDataURL('image/jpeg', quality)
+
+  while (output.length > MAX_IMAGE_DATA_URL_LENGTH && quality > 0.4) {
+    quality -= 0.08
+    output = canvas.toDataURL('image/jpeg', quality)
+  }
+
+  return output
+}
 
 const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar }) => {
   const [nome, setNome] = useState(produto?.nome || '')
@@ -85,7 +123,14 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
     setUploadingImage(true)
     try {
       const dataUrl = await fileToDataUrl(file)
-      setImagemUrl(dataUrl)
+      const compressed = await compressDataUrl(dataUrl)
+
+      if (compressed.length > MAX_IMAGE_DATA_URL_LENGTH) {
+        setError('A foto ficou grande para envio. Use uma imagem menor ou URL da imagem.')
+        return
+      }
+
+      setImagemUrl(compressed)
     } catch {
       setError('Não foi possível carregar a imagem')
     } finally {
@@ -108,6 +153,10 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
     if (!Number.isFinite(custoNum) || custoNum < 0) { setError('Custo não pode ser negativo'); return }
     if (!Number.isInteger(quantidadeNum) || quantidadeNum < 0) { setError('Quantidade inválida'); return }
     if (!isValidImageUrl(imagemUrl)) { setError('Informe uma URL de imagem válida (http/https)'); return }
+    if (imagemUrl.startsWith('data:image/') && imagemUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+      setError('A foto está grande para envio. Reduza a imagem ou use uma URL externa.')
+      return
+    }
 
     try {
       let categoriaFinalId = categoriaId
