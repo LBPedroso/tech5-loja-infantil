@@ -14,6 +14,8 @@ const extractError = (err: unknown): string => {
   return data?.error || 'Erro ao salvar produto'
 }
 
+const CATEGORIA_PADRAO_NOME = 'Sem categoria'
+
 const isValidImageUrl = (value: string): boolean => {
   if (!value.trim()) return true
 
@@ -108,6 +110,32 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
     if (!isValidImageUrl(imagemUrl)) { setError('Informe uma URL de imagem válida (http/https)'); return }
 
     try {
+      let categoriaFinalId = categoriaId
+
+      if (!categoriaFinalId) {
+        const categoriaPadraoExistente = categorias.find(
+          (cat) => cat.nome.trim().toLowerCase() === CATEGORIA_PADRAO_NOME.toLowerCase()
+        )
+
+        if (categoriaPadraoExistente) {
+          categoriaFinalId = categoriaPadraoExistente.id
+        } else {
+          const response = await api.post('/categorias', {
+            nome: CATEGORIA_PADRAO_NOME,
+            descricao: 'Categoria criada automaticamente para produtos sem categoria definida',
+          })
+
+          const categoriaCriada = response.data?.data ?? response.data
+          if (!categoriaCriada?.id) {
+            throw new Error('Não foi possível criar categoria padrão')
+          }
+
+          categoriaFinalId = categoriaCriada.id
+          setCategorias((prev) => [...prev, categoriaCriada])
+          setCategoriaId(categoriaFinalId)
+        }
+      }
+
       const payload = {
         nome: nome.trim(),
         descricao: descricao.trim() || undefined,
@@ -115,7 +143,7 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
         preco: precoNum,
         custo: custoNum,
         quantidade: quantidadeNum,
-        categoriaId: categoriaId || undefined,
+        categoriaId: categoriaFinalId,
       }
       if (produto) {
         await api.put(`/produtos/${produto.id}`, payload)
