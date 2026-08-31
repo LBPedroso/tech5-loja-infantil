@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import api from '../../services/api'
 import { Categoria, Produto } from '../../types'
 import AlertMessage from '../ui/AlertMessage'
@@ -93,6 +93,8 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
   const [uploadingImage, setUploadingImage] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const galleryInputRef = useRef<HTMLInputElement | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     api.get('/categorias', { params: { page: 1, limit: 100 } })
@@ -137,6 +139,14 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
       setUploadingImage(false)
       e.target.value = ''
     }
+  }
+
+  const handleOpenGallery = () => {
+    galleryInputRef.current?.click()
+  }
+
+  const handleOpenCamera = () => {
+    cameraInputRef.current?.click()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -215,17 +225,17 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
       <form onSubmit={handleSubmit} style={{ maxWidth: '500px', marginTop: '16px' }}>
         <input type="text" placeholder="Nome do produto" value={nome} onChange={(e) => setNome(e.target.value)} required />
         <textarea placeholder="Descrição (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} />
-        <input
-          type="url"
-          placeholder="URL da foto do produto (opcional)"
-          value={imagemUrl}
-          onChange={(e) => setImagemUrl(e.target.value)}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageFileChange}
-        />
+        <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleImageFileChange} style={{ display: 'none' }} />
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageFileChange} style={{ display: 'none' }} />
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button type="button" onClick={handleOpenGallery} style={{ background: '#4a7cf3' }}>
+            Escolher da galeria
+          </button>
+          <button type="button" onClick={handleOpenCamera} style={{ background: '#0ea5a6' }}>
+            Tirar foto
+          </button>
+        </div>
+        <p style={{ marginTop: '-4px', color: '#5f5a66' }}>No celular, você pode escolher da galeria ou abrir a câmera.</p>
         {uploadingImage && <p style={{ marginTop: '-6px', marginBottom: '4px' }}>Processando imagem...</p>}
         {imagemUrl.trim() && (
           <button type="button" onClick={() => setImagemUrl('')} style={{ width: 'fit-content' }}>
