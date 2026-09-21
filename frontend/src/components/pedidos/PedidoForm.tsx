@@ -20,16 +20,30 @@ const PedidoForm: React.FC<PedidoFormProps> = ({ onSalvar, onCancelar }) => {
   useEffect(() => {
     api.get('/produtos', { params: { page: 1, limit: 100 } })
       .then((res) => {
-        const payload = res.data?.data
-        const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+        const rootPayload = res.data
+        const payload = rootPayload?.data
+        const data = Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : Array.isArray(rootPayload)
+              ? rootPayload
+              : []
         setProdutos(data)
       })
       .catch(() => {})
 
     api.get('/clientes', { params: { page: 1, limit: 100 } })
       .then((res) => {
-        const payload = res.data?.data
-        const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+        const rootPayload = res.data
+        const payload = rootPayload?.data
+        const data = Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : Array.isArray(rootPayload)
+              ? rootPayload
+              : []
         setClientes(data)
       })
       .catch(() => {})
@@ -47,7 +61,8 @@ const PedidoForm: React.FC<PedidoFormProps> = ({ onSalvar, onCancelar }) => {
     if (!Number.isInteger(qtd) || qtd <= 0) { setError('Quantidade deve ser um inteiro maior que zero'); return }
 
     try {
-      await api.post('/pedidos', { clienteId: clienteId || undefined, itens: [{ produtoId, quantidade: qtd }] })
+      const itens = [{ produtoId, quantidade: qtd }]
+      await api.post('/pedidos', { clienteId: clienteId || undefined, itens, items: itens })
       setSuccess('Pedido criado com sucesso')
       setTimeout(onSalvar, 500)
     } catch (err: unknown) {

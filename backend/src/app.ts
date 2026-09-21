@@ -295,9 +295,64 @@ app.get("/api/pedidos", (req: any, res: any) => {
 });
 
 app.post("/api/pedidos", (req: any, res: any) => {
-  const { clienteId, items } = req.body;
-  if (!clienteId || !items) return res.status(400).json({ error: "Dados obrigatórios" });
-  const order = { id: Date.now(), clienteId, items, status: "pendente" };
+  const clienteId = req.body.clienteId ?? null;
+  const rawItems = req.body.itens ?? req.body.items;
+
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    return res.status(400).json({ error: "Itens do pedido são obrigatórios" });
+  }
+
+  const itens = rawItems
+    .map((item: any) => {
+      const produtoId = String(item?.produtoId || "");
+      const quantidade = Number(item?.quantidade);
+      const produto = products.find((p: any) => p.id.toString() === produtoId);
+
+      if (!produto || !Number.isInteger(quantidade) || quantidade <= 0) {
+        return null;
+      }
+
+      if (Number(produto.quantidade) < quantidade) {
+        return { error: `Estoque insuficiente para ${produto.nome}` };
+      }
+
+      return {
+        produtoId,
+        quantidade,
+        preco: Number(produto.preco),
+        produto: {
+          id: produto.id,
+          nome: produto.nome,
+        },
+      };
+    })
+    .filter((item: any) => item !== null);
+
+  const invalidItem = itens.find((item: any) => item?.error);
+  if (invalidItem?.error) {
+    return res.status(400).json({ error: invalidItem.error });
+  }
+
+  if (itens.length === 0) {
+    return res.status(400).json({ error: "Itens do pedido inválidos" });
+  }
+
+  for (const item of itens as any[]) {
+    const produto = products.find((p: any) => p.id.toString() === item.produtoId);
+    if (produto) {
+      produto.quantidade = Number(produto.quantidade) - Number(item.quantidade);
+    }
+  }
+
+  const total = itens.reduce((acc: number, item: any) => acc + item.preco * item.quantidade, 0);
+  const order = {
+    id: Date.now(),
+    clienteId,
+    total,
+    status: "PENDENTE",
+    itens,
+    createdAt: new Date().toISOString(),
+  };
   orders.push(order);
   return res.status(201).json(order);
 });

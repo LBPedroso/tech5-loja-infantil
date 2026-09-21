@@ -30,11 +30,18 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
       const params: Record<string, unknown> = { page: pageNum, limit: 10 }
       if (status) params.status = status
       const res = await api.get('/pedidos', { params })
-      const payload = res.data?.data
-      const data: Pedido[] = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+      const rootPayload = res.data
+      const payload = rootPayload?.data
+      const data: Pedido[] = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : Array.isArray(rootPayload)
+            ? rootPayload
+            : []
       setPedidos(data)
-      setPage(payload?.page || pageNum)
-      setTotalPages(payload?.pages || 1)
+      setPage(payload?.page || rootPayload?.page || pageNum)
+      setTotalPages(payload?.pages || rootPayload?.pages || 1)
       setStatusEdit(data.reduce((acc: Record<string, string>, p) => { acc[p.id] = p.status; return acc }, {}))
     } catch {
       setError('Erro ao carregar pedidos')
