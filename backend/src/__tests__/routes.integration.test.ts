@@ -50,4 +50,29 @@ describe("Integracao de rotas principais", () => {
     expect(response.status).toBe(401);
     expect(response.body.success).toBe(false);
   });
+
+  it("POST /api/categorias deve disponibilizar a categoria na listagem", async () => {
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "admin@liligu.com", senha: "Admin123!" });
+
+    expect(login.status).toBe(200);
+
+    const nome = `Categoria teste ${Date.now()}`;
+    const criada = await request(app)
+      .post("/api/categorias")
+      .set("Authorization", `Bearer ${login.body.data.token}`)
+      .send({ nome });
+
+    expect(criada.status).toBe(201);
+
+    const listagem = await request(app)
+      .get("/api/categorias")
+      .set("Authorization", `Bearer ${login.body.data.token}`);
+
+    expect(listagem.status).toBe(200);
+    expect(listagem.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: criada.body.id, nome }),
+    ]));
+  });
 });
