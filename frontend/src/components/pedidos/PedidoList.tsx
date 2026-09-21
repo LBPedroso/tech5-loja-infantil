@@ -11,7 +11,43 @@ interface PedidoListProps {
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 
-const formatDate = (v: string) => new Date(v).toLocaleString('pt-BR')
+const formatDate = (v?: string) => {
+  if (!v) return '-'
+  const parsed = new Date(v)
+  return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleString('pt-BR')
+}
+
+const getPedidoItens = (pedido: Pedido & { items?: unknown[]; itens?: unknown[] }) => {
+  if (Array.isArray(pedido.itens)) return pedido.itens
+  if (Array.isArray(pedido.items)) return pedido.items
+  return []
+}
+
+const getItemDescricao = (item: unknown): string => {
+  const raw = item as {
+    quantidade?: number
+    produto?: { nome?: string }
+    nome?: string
+    produtoNome?: string
+  }
+
+  const nome = raw.produto?.nome || raw.produtoNome || raw.nome || 'Produto'
+  const quantidade = Number(raw.quantidade ?? 0)
+  return `${nome} x${Number.isFinite(quantidade) ? quantidade : 0}`
+}
+
+const getPedidoTotal = (pedido: Pedido & { items?: unknown[]; itens?: unknown[] }): number => {
+  const total = Number((pedido as { total?: number }).total)
+  if (Number.isFinite(total)) return total
+
+  const itens = getPedidoItens(pedido)
+  return itens.reduce((acc, item) => {
+    const raw = item as { preco?: number; quantidade?: number }
+    const preco = Number(raw.preco ?? 0)
+    const quantidade = Number(raw.quantidade ?? 0)
+    return acc + (Number.isFinite(preco) ? preco : 0) * (Number.isFinite(quantidade) ? quantidade : 0)
+  }, 0)
+}
 
 const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -42,7 +78,10 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
       setPedidos(data)
       setPage(payload?.page || rootPayload?.page || pageNum)
       setTotalPages(payload?.pages || rootPayload?.pages || 1)
-      setStatusEdit(data.reduce((acc: Record<string, string>, p) => { acc[p.id] = p.status; return acc }, {}))
+      setStatusEdit(data.reduce((acc: Record<string, string>, p) => {
+        acc[String((p as { id?: string | number }).id ?? '')] = p.status
+        return acc
+      }, {}))
     } catch {
       setError('Erro ao carregar pedidos')
     } finally {
@@ -118,14 +157,17 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
           </thead>
           <tbody>
             {pedidos.map((pedido) => (
-              <tr key={pedido.id}>
-                <td>{pedido.id.slice(0, 8)}...</td>
+              <tr key={String((pedido as { id?: string | number }).id ?? '')}>
+                <td>{String((pedido as { id?: string | number }).id ?? '').slice(0, 8)}...</td>
                 <td>{pedido.cliente?.nome || 'Sem cliente'}</td>
-                <td>{formatCurrency(pedido.total)}</td>
+                <td>{formatCurrency(getPedidoTotal(pedido as Pedido & { items?: unknown[]; itens?: unknown[] }))}</td>
                 <td>
                   <select
-                    value={statusEdit[pedido.id] || pedido.status}
-                    onChange={(e) => setStatusEdit((prev) => ({ ...prev, [pedido.id]: e.target.value }))}
+                    value={statusEdit[String((pedido as { id?: string | number }).id ?? '')] || pedido.status}
+                    onChange={(e) => setStatusEdit((prev) => ({
+                      ...prev,
+                      [String((pedido as { id?: string | number }).id ?? '')]: e.target.value,
+                    }))}
                   >
                     <option value="PENDENTE">PENDENTE</option>
                     <option value="PROCESSANDO">PROCESSANDO</option>
@@ -133,11 +175,11 @@ const PedidoList: React.FC<PedidoListProps> = ({ onNovo }) => {
                     <option value="CANCELADO">CANCELADO</option>
                   </select>
                 </td>
-                <td>{formatDate(pedido.createdAt)}</td>
-                <td>{pedido.itens.map((item) => `${item.produto.nome} x${item.quantidade}`).join(', ')}</td>
+                <td>{formatDate((pedido as { createdAt?: string }).createdAt)}</td>
+                <td>{getPedidoItens(pedido as Pedido & { items?: unknown[]; itens?: unknown[] }).map(getItemDescricao).join(', ') || '-'}</td>
                 <td style={{ display: 'flex', gap: '8px' }}>
-                  <button type="button" onClick={() => handleAtualizarStatus(pedido.id)}>Salvar status</button>
-                  <button type="button" onClick={() => handleExcluir(pedido.id)}>Excluir</button>
+                  <button type="button" onClick={() => handleAtualizarStatus(String((pedido as { id?: string | number }).id ?? ''))}>Salvar status</button>
+                  <button type="button" onClick={() => handleExcluir(String((pedido as { id?: string | number }).id ?? ''))}>Excluir</button>
                 </td>
               </tr>
             ))}
