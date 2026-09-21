@@ -44,10 +44,10 @@ describe("Integracao de rotas principais", () => {
     expect(response.body.success).toBe(false);
   });
 
-  it("GET /api/financeiro/resumo deve retornar 404", async () => {
+  it("GET /api/financeiro/resumo sem token deve retornar 401", async () => {
     const response = await request(app).get("/api/financeiro/resumo");
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(401);
     expect(response.body.success).toBe(false);
   });
 });

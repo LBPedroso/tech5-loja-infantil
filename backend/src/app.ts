@@ -54,6 +54,33 @@ const users: any = [];
 const products: any = [];
 const categories: any = [];
 const orders: any = [];
+const clients: any = [];
+const transactions: any = [];
+
+const getPagination = (query: any) => {
+  const page = Math.max(1, Number(query?.page) || 1);
+  const limit = Math.max(1, Number(query?.limit) || 10);
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
+};
+
+const toPaginatedResponse = (data: any[], page: number, limit: number) => {
+  const total = data.length;
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const start = (page - 1) * limit;
+  const paged = data.slice(start, start + limit);
+
+  return {
+    success: true,
+    data: {
+      data: paged,
+      total,
+      page,
+      limit,
+      pages,
+    },
+  };
+};
 
 const isAdmin = (user: any) => String(user?.role || "USER").toUpperCase() === "ADMIN";
 
@@ -103,6 +130,14 @@ const requireAdmin = (req: any, res: any, next: any) => {
 
   return next();
 };
+
+const sanitizeUserForAdmin = (user: any) => ({
+  id: String(user.id),
+  nome: user.nome,
+  email: user.email,
+  cpf: user.cpf || "",
+  role: isAdmin(user) ? "ADMIN" : "USER",
+});
 
 app.post("/api/uploads/produtos", requireAuth, requireAdmin, (req: any, res: any) => {
 
@@ -210,6 +245,38 @@ app.get("/api/auth/me", (req: any, res: any) => {
       cpf: user.cpf || "",
       role: user.role || "USER",
     },
+  });
+});
+
+app.get("/api/admin/users", requireAuth, requireAdmin, (_req: any, res: any) => {
+  return res.json({
+    success: true,
+    data: users.map(sanitizeUserForAdmin),
+  });
+});
+
+app.patch("/api/admin/users/:id/role", requireAuth, requireAdmin, (req: any, res: any) => {
+  const role = String(req.body?.role || "").toUpperCase();
+  if (!["ADMIN", "USER"].includes(role)) {
+    return res.status(400).json({ success: false, error: "Perfil inválido" });
+  }
+
+  const targetUser = users.find((u: any) => String(u.id) === String(req.params.id));
+  if (!targetUser) {
+    return res.status(404).json({ success: false, error: "Usuário não encontrado" });
+  }
+
+  const authUser = req.authUser;
+  if (String(authUser.id) === String(targetUser.id) && role !== "ADMIN") {
+    return res.status(400).json({ success: false, error: "Não é permitido remover o próprio perfil ADMIN" });
+  }
+
+  targetUser.role = role;
+
+  return res.json({
+    success: true,
+    data: sanitizeUserForAdmin(targetUser),
+    message: "Perfil atualizado com sucesso",
   });
 });
 
@@ -409,6 +476,138 @@ app.delete("/api/pedidos/:id", requireAuth, requireAdmin, (req: any, res: any) =
   if (idx === -1) return res.status(404).json({ error: "Pedido não encontrado" });
   orders.splice(idx, 1);
   return res.json({ message: "Deletado" });
+});
+
+// Clientes endpoints
+app.get("/api/clientes", requireAuth, requireAdmin, (req: any, res: any) => {
+  const { page, limit } = getPagination(req.query);
+  return res.json(toPaginatedResponse(clients, page, limit));
+});
+
+app.post("/api/clientes", requireAuth, requireAdmin, (req: any, res: any) => {
+  const nome = String(req.body?.nome || "").trim();
+  if (nome.length < 3) {
+    return res.status(400).json({ success: false, error: "Nome do cliente deve ter pelo menos 3 caracteres" });
+  }
+
+  const cliente = {
+    id: Date.now(),
+    nome,
+    telefone: req.body?.telefone || null,
+    email: req.body?.email || null,
+    observacoes: req.body?.observacoes || null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  clients.push(cliente);
+  return res.status(201).json({ success: true, data: cliente });
+});
+
+app.put("/api/clientes/:id", requireAuth, requireAdmin, (req: any, res: any) => {
+  const cliente = clients.find((c: any) => String(c.id) === String(req.params.id));
+  if (!cliente) {
+    return res.status(404).json({ success: false, error: "Cliente não encontrado" });
+  }
+
+  const nome = String(req.body?.nome || cliente.nome).trim();
+  if (nome.length < 3) {
+    return res.status(400).json({ success: false, error: "Nome do cliente deve ter pelo menos 3 caracteres" });
+  }
+
+  cliente.nome = nome;
+  cliente.telefone = req.body?.telefone ?? cliente.telefone;
+  cliente.email = req.body?.email ?? cliente.email;
+  cliente.observacoes = req.body?.observacoes ?? cliente.observacoes;
+  cliente.updatedAt = new Date().toISOString();
+
+  return res.json({ success: true, data: cliente });
+});
+
+app.delete("/api/clientes/:id", requireAuth, requireAdmin, (req: any, res: any) => {
+  const idx = clients.findIndex((c: any) => String(c.id) === String(req.params.id));
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: "Cliente não encontrado" });
+  }
+
+  clients.splice(idx, 1);
+  return res.json({ success: true, message: "Cliente excluído com sucesso" });
+});
+
+// Financeiro endpoints
+app.get("/api/financeiro", requireAuth, requireAdmin, (req: any, res: any) => {
+  const { page, limit } = getPagination(req.query);
+  const tipo = String(req.query?.tipo || "").toUpperCase();
+  const filtered = tipo ? transactions.filter((t: any) => String(t.tipo).toUpperCase() === tipo) : transactions;
+  return res.json(toPaginatedResponse(filtered, page, limit));
+});
+
+app.get("/api/financeiro/resumo", requireAuth, requireAdmin, (_req: any, res: any) => {
+  const totalEntradas = transactions
+    .filter((t: any) => t.tipo === "ENTRADA")
+    .reduce((acc: number, t: any) => acc + Number(t.valor || 0), 0);
+
+  const totalSaidas = transactions
+    .filter((t: any) => t.tipo === "SAIDA")
+    .reduce((acc: number, t: any) => acc + Number(t.valor || 0), 0);
+
+  const saldo = totalEntradas - totalSaidas;
+
+  return res.json({
+    success: true,
+    data: {
+      totalEntradas,
+      totalSaidas,
+      saldo,
+      faturamentoMensal: 0,
+      custoProdutosMensal: 0,
+      lucroLiquidoMensal: 0,
+      ticketMedioMensal: 0,
+      totalVendasMensal: 0,
+      mesAtual: {
+        entradas: totalEntradas,
+        saidas: totalSaidas,
+        saldo,
+      },
+    },
+  });
+});
+
+app.post("/api/financeiro", requireAuth, requireAdmin, (req: any, res: any) => {
+  const tipo = String(req.body?.tipo || "").toUpperCase();
+  const valor = Number(req.body?.valor);
+
+  if (!["ENTRADA", "SAIDA"].includes(tipo)) {
+    return res.status(400).json({ success: false, error: "Tipo de transação inválido" });
+  }
+
+  if (!Number.isFinite(valor) || valor <= 0) {
+    return res.status(400).json({ success: false, error: "Valor deve ser maior que zero" });
+  }
+
+  const transacao = {
+    id: Date.now(),
+    tipo,
+    valor,
+    descricao: req.body?.descricao || null,
+    data: req.body?.data || new Date().toISOString().slice(0, 10),
+    userId: String(req.authUser.id),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  transactions.push(transacao);
+  return res.status(201).json({ success: true, data: transacao });
+});
+
+app.delete("/api/financeiro/:id", requireAuth, requireAdmin, (req: any, res: any) => {
+  const idx = transactions.findIndex((t: any) => String(t.id) === String(req.params.id));
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: "Transação não encontrada" });
+  }
+
+  transactions.splice(idx, 1);
+  return res.json({ success: true, message: "Transação excluída" });
 });
 
 // Health check
