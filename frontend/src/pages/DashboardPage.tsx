@@ -8,8 +8,9 @@ import ProdutosSection from '../components/produtos/ProdutosSection'
 import PedidosSection from '../components/pedidos/PedidosSection'
 import PerfilForm from '../components/perfil/PerfilForm'
 import FinanceiroSection from '../components/financeiro/FinanceiroSection'
+import UsuariosSection from '../components/usuarios/UsuariosSection'
 
-type TabName = 'dashboard' | 'clientes' | 'categorias' | 'produtos' | 'pedidos' | 'financeiro' | 'perfil'
+type TabName = 'dashboard' | 'clientes' | 'categorias' | 'produtos' | 'pedidos' | 'financeiro' | 'perfil' | 'usuarios'
 
 const TABS: Array<{ key: TabName; label: string }> = [
   { key: 'dashboard', label: 'Home' },
@@ -18,6 +19,7 @@ const TABS: Array<{ key: TabName; label: string }> = [
   { key: 'produtos', label: 'Produtos' },
   { key: 'pedidos', label: 'Pedidos' },
   { key: 'financeiro', label: 'Financeiro' },
+  { key: 'usuarios', label: 'Usuários' },
   { key: 'perfil', label: 'Meu Perfil' },
 ]
 
@@ -31,6 +33,23 @@ const DashboardPage: React.FC = () => {
     navigate('/login')
   }
 
+  const role = (user?.role || 'USER').toUpperCase()
+
+  const roleTabAccess: Record<string, TabName[]> = {
+    ADMIN: ['dashboard', 'clientes', 'categorias', 'produtos', 'pedidos', 'financeiro', 'usuarios', 'perfil'],
+    ESTOQUE: ['dashboard', 'categorias', 'produtos', 'perfil'],
+    VENDEDOR: ['dashboard', 'clientes', 'pedidos', 'perfil'],
+    CAIXA: ['dashboard', 'pedidos', 'financeiro', 'perfil'],
+    USER: ['dashboard', 'pedidos', 'perfil'],
+  }
+
+  const allowedKeys = roleTabAccess[role] || roleTabAccess.USER
+  const allowedTabs = TABS.filter((tab) => allowedKeys.includes(tab.key))
+
+  const safeActiveTab = allowedTabs.some((tab) => tab.key === activeTab)
+    ? activeTab
+    : 'dashboard'
+
   const summaryCards = [
     { title: 'Modulos ativos', value: '7', tone: 'teal' },
     { title: 'Status do sistema', value: 'Online', tone: 'green' },
@@ -38,7 +57,7 @@ const DashboardPage: React.FC = () => {
     { title: 'Ambiente', value: 'Producao', tone: 'purple' },
   ]
 
-  const currentTabLabel = TABS.find((tab) => tab.key === activeTab)?.label || 'Painel'
+  const currentTabLabel = allowedTabs.find((tab) => tab.key === safeActiveTab)?.label || 'Painel'
 
   return (
     <div className="admin-shell">
@@ -49,10 +68,10 @@ const DashboardPage: React.FC = () => {
         </div>
 
         <nav className="sidebar-menu" aria-label="Navegacao principal">
-          {TABS.map((tab) => (
+          {allowedTabs.map((tab) => (
             <button
               key={tab.key}
-              className={`menu-button${activeTab === tab.key ? ' active' : ''}`}
+              className={`menu-button${safeActiveTab === tab.key ? ' active' : ''}`}
               onClick={() => setActiveTab(tab.key)}
             >
               {tab.label}
@@ -82,13 +101,14 @@ const DashboardPage: React.FC = () => {
         </section>
 
         <div className="card workspace-card">
-          {activeTab === 'dashboard' && <HomeSection />}
-          {activeTab === 'clientes' && <ClientesSection />}
-          {activeTab === 'categorias' && <CategoriasSection />}
-          {activeTab === 'produtos' && <ProdutosSection />}
-          {activeTab === 'pedidos' && <PedidosSection />}
-          {activeTab === 'financeiro' && <FinanceiroSection />}
-          {activeTab === 'perfil' && <PerfilForm />}
+          {safeActiveTab === 'dashboard' && <HomeSection />}
+          {safeActiveTab === 'clientes' && <ClientesSection />}
+          {safeActiveTab === 'categorias' && <CategoriasSection />}
+          {safeActiveTab === 'produtos' && <ProdutosSection />}
+          {safeActiveTab === 'pedidos' && <PedidosSection />}
+          {safeActiveTab === 'financeiro' && <FinanceiroSection />}
+          {safeActiveTab === 'usuarios' && <UsuariosSection />}
+          {safeActiveTab === 'perfil' && <PerfilForm />}
         </div>
       </main>
     </div>
