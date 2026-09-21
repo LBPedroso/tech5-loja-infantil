@@ -3,7 +3,7 @@ services:
     name: tech5-loja-infantil-api
     runtime: node
     rootDir: backend
-    buildCommand: npm install; npm run prisma:generate; npm run build; npm run prisma:deploy; npm run prisma:seed
+    buildCommand: npm install --include=dev; npm run prisma:generate; npm run build; npm run prisma:deploy; npm run prisma:seed
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
