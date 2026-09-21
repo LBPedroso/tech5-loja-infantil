@@ -22,7 +22,7 @@ const CategoriaList: React.FC<CategoriaListProps> = ({ onNovo, onEditar }) => {
     setError('')
     try {
       const res = await api.get('/categorias', { params: { page: pageNum, limit: 10 } })
-      const payload = res.data?.data
+      const payload = res.data?.data ?? res.data
       const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
       setCategorias(data)
       setPage(payload?.page || pageNum)
