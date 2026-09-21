@@ -15,6 +15,7 @@ const extractError = (err: unknown): string => {
 }
 
 const CATEGORIA_PADRAO_NOME = 'Sem categoria'
+const MAX_IMAGE_UPLOAD_BYTES = 3 * 1024 * 1024
 const MAX_IMAGE_DATA_URL_LENGTH = 95_000
 
 const fileToDataUrl = (file: File): Promise<string> =>
@@ -68,6 +69,57 @@ const compressDataUrl = async (originalDataUrl: string): Promise<string> => {
   return output
 }
 
+const compressImageFile = async (file: File): Promise<File> => {
+  const dataUrl = await fileToDataUrl(file)
+  const image = await loadImage(dataUrl)
+  const maxSide = 1600
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height))
+  const width = Math.max(1, Math.round(image.width * scale))
+  const height = Math.max(1, Math.round(image.height * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    throw new Error('Não foi possível processar a imagem')
+  }
+
+  ctx.drawImage(image, 0, 0, width, height)
+
+  let quality = 0.82
+  let blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) {
+        resolve(result)
+        return
+      }
+      reject(new Error('Não foi possível processar a imagem'))
+    }, 'image/jpeg', quality)
+  })
+
+  while (blob.size > MAX_IMAGE_UPLOAD_BYTES && quality > 0.4) {
+    quality -= 0.08
+    blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) {
+          resolve(result)
+          return
+        }
+        reject(new Error('Não foi possível processar a imagem'))
+      }, 'image/jpeg', quality)
+    })
+  }
+
+  if (blob.size > MAX_IMAGE_UPLOAD_BYTES) {
+    throw new Error('A foto ficou grande para envio. Use uma imagem menor.')
+  }
+
+  const baseName = file.name.replace(/\.[^.]+$/, '') || 'imagem-produto'
+  return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' })
+}
+
 const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar }) => {
   const [nome, setNome] = useState(produto?.nome || '')
   const [descricao, setDescricao] = useState(produto?.descricao || '')
@@ -112,12 +164,6 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
       return
     }
 
-    // Evita upload desnecessariamente pesado no cliente.
-    if (file.size > 3 * 1024 * 1024) {
-      setError('A imagem deve ter no máximo 3MB')
-      return
-    }
-
     setError('')
     setSelectedImageFile(file)
     setImagemUrl('')
@@ -133,8 +179,13 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
       return imagemUrl.trim() || undefined
     }
 
+    const fileForUpload =
+      selectedImageFile.size > MAX_IMAGE_UPLOAD_BYTES || !['image/jpeg', 'image/png', 'image/webp'].includes(selectedImageFile.type)
+        ? await compressImageFile(selectedImageFile)
+        : selectedImageFile
+
     const formData = new FormData()
-    formData.append('imagem', selectedImageFile)
+    formData.append('imagem', fileForUpload)
 
     setUploadingImage(true)
     try {

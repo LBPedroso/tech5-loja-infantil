@@ -53,6 +53,7 @@ Este manual descreve o uso do sistema administrativo da loja, cobrindo autentica
   - `Escolher da galeria` para selecionar foto existente.
   - `Tirar foto` para abrir a camera.
 - O sistema faz upload real no backend (multipart/form-data) e salva a URL da imagem no produto.
+- Se a foto vier grande demais, o sistema comprime automaticamente antes do envio para evitar falha no upload.
 - Regras de validacao da imagem:
   - Extensoes aceitas: JPG, PNG, WEBP.
   - Tamanho maximo: 3MB.
