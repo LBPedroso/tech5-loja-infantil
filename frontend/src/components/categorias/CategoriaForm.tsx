@@ -39,7 +39,7 @@ const CategoriaForm: React.FC<CategoriaFormProps> = ({ categoria, onSalvar, onCa
         await api.post('/categorias', payload)
         setSuccess('Categoria criada com sucesso')
       }
-      setTimeout(onSalvar, 500)
+      onSalvar()
     } catch (err: unknown) {
       setError(extractError(err))
     }
