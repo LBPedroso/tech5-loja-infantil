@@ -32,11 +32,18 @@ const ProdutoList: React.FC<ProdutoListProps> = ({ onNovo, onEditar }) => {
       const params: Record<string, unknown> = { page: pageNum, limit: 10 }
       if (termoBusca) params.busca = termoBusca
       const res = await api.get('/produtos', { params })
-      const payload = res.data?.data
-      const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+      const rootPayload = res.data
+      const payload = rootPayload?.data
+      const data = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : Array.isArray(rootPayload)
+            ? rootPayload
+            : []
       setProdutos(data)
-      setPage(payload?.page || pageNum)
-      setTotalPages(payload?.pages || 1)
+      setPage(payload?.page || rootPayload?.page || pageNum)
+      setTotalPages(payload?.pages || rootPayload?.pages || 1)
     } catch {
       setError('Erro ao carregar produtos')
     } finally {
