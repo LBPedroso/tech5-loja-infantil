@@ -41,7 +41,7 @@ const getPedidoTotal = (pedido: Pedido & { items?: unknown[]; itens?: unknown[] 
   if (Number.isFinite(total)) return total
 
   const itens = getPedidoItens(pedido)
-  return itens.reduce((acc, item) => {
+  return itens.reduce((acc: number, item) => {
     const raw = item as { preco?: number; quantidade?: number }
     const preco = Number(raw.preco ?? 0)
     const quantidade = Number(raw.quantidade ?? 0)
