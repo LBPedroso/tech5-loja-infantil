@@ -55,6 +55,8 @@ const products: any = [];
 const categories: any = [];
 const orders: any = [];
 
+const isAdmin = (user: any) => String(user?.role || "USER").toUpperCase() === "ADMIN";
+
 const ensureDefaultAdminUser = () => {
   const adminEmail = "admin@liligu.com";
   const exists = users.some((u: any) => u.email === adminEmail);
@@ -66,6 +68,7 @@ const ensureDefaultAdminUser = () => {
       senha: "Admin123!",
       nome: "Administrador Lili&Gu",
       cpf: "52998224725",
+      role: "ADMIN",
     });
   }
 };
@@ -82,11 +85,26 @@ const getUserByToken = (authorization?: string) => {
   return users.find((u: any) => u.id === userId) || null;
 };
 
-app.post("/api/uploads/produtos", (req: any, res: any) => {
+const requireAuth = (req: any, res: any, next: any) => {
   const user = getUserByToken(req.headers.authorization);
   if (!user) {
     return res.status(401).json({ success: false, error: "Não autorizado" });
   }
+
+  req.authUser = user;
+  return next();
+};
+
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.authUser;
+  if (!user || !isAdmin(user)) {
+    return res.status(403).json({ success: false, error: "Acesso restrito ao administrador" });
+  }
+
+  return next();
+};
+
+app.post("/api/uploads/produtos", requireAuth, requireAdmin, (req: any, res: any) => {
 
   uploadProdutoImage.single("imagem")(req, res, (err: unknown) => {
     if (err instanceof multer.MulterError) {
@@ -136,11 +154,11 @@ app.post("/api/auth/signup", (req: any, res: any) => {
     return res.status(409).json({ error: "Email já cadastrado" });
   }
 
-  const user = { id: Date.now(), email, senha, nome, cpf };
+  const user = { id: Date.now(), email, senha, nome, cpf, role: "USER" };
   users.push(user);
   return res.status(201).json({
     success: true,
-    data: { id: String(user.id), email: user.email },
+    data: { id: String(user.id), email: user.email, role: user.role },
     message: "Usuário cadastrado com sucesso",
   });
 });
@@ -163,6 +181,7 @@ app.post("/api/auth/login", (req: any, res: any) => {
     data: {
       id: String(user.id),
       email: user.email,
+      role: user.role || "USER",
       token: "mock-token-" + user.id,
     },
     message: "Login realizado com sucesso",
@@ -189,6 +208,7 @@ app.get("/api/auth/me", (req: any, res: any) => {
       email: user.email,
       nome: user.nome,
       cpf: user.cpf || "",
+      role: user.role || "USER",
     },
   });
 });
@@ -198,7 +218,7 @@ app.get("/api/categorias", (req: any, res: any) => {
   return res.json(categories);
 });
 
-app.post("/api/categorias", (req: any, res: any) => {
+app.post("/api/categorias", requireAuth, requireAdmin, (req: any, res: any) => {
   const { nome } = req.body;
   if (!nome) return res.status(400).json({ error: "Nome obrigatório" });
   const categoria = { id: Date.now(), nome };
@@ -212,14 +232,14 @@ app.get("/api/categorias/:id", (req: any, res: any) => {
   return res.json(cat);
 });
 
-app.put("/api/categorias/:id", (req: any, res: any) => {
+app.put("/api/categorias/:id", requireAuth, requireAdmin, (req: any, res: any) => {
   const cat = categories.find((c: any) => c.id.toString() === req.params.id);
   if (!cat) return res.status(404).json({ error: "Categoria não encontrada" });
   cat.nome = req.body.nome || cat.nome;
   return res.json(cat);
 });
 
-app.delete("/api/categorias/:id", (req: any, res: any) => {
+app.delete("/api/categorias/:id", requireAuth, requireAdmin, (req: any, res: any) => {
   const idx = categories.findIndex((c: any) => c.id.toString() === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Categoria não encontrada" });
   categories.splice(idx, 1);
@@ -237,7 +257,7 @@ app.get("/api/produtos", (req: any, res: any) => {
   return res.json(filtered);
 });
 
-app.post("/api/produtos", (req: any, res: any) => {
+app.post("/api/produtos", requireAuth, requireAdmin, (req: any, res: any) => {
   const { nome, preco, custo, quantidade, categoriaId, descricao, imagemUrl } = req.body;
   if (!nome || !preco) return res.status(400).json({ error: "Nome e preço obrigatórios" });
 
@@ -263,7 +283,7 @@ app.get("/api/produtos/:id", (req: any, res: any) => {
   return res.json(prod);
 });
 
-app.put("/api/produtos/:id", (req: any, res: any) => {
+app.put("/api/produtos/:id", requireAuth, requireAdmin, (req: any, res: any) => {
   const prod = products.find((p: any) => p.id.toString() === req.params.id);
   if (!prod) return res.status(404).json({ error: "Produto não encontrado" });
   prod.nome = req.body.nome || prod.nome;
@@ -282,7 +302,7 @@ app.put("/api/produtos/:id", (req: any, res: any) => {
   return res.json(prod);
 });
 
-app.delete("/api/produtos/:id", (req: any, res: any) => {
+app.delete("/api/produtos/:id", requireAuth, requireAdmin, (req: any, res: any) => {
   const idx = products.findIndex((p: any) => p.id.toString() === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Produto não encontrado" });
   products.splice(idx, 1);
@@ -290,11 +310,18 @@ app.delete("/api/produtos/:id", (req: any, res: any) => {
 });
 
 // Pedidos endpoints
-app.get("/api/pedidos", (req: any, res: any) => {
-  return res.json(orders);
+app.get("/api/pedidos", requireAuth, (req: any, res: any) => {
+  const user = req.authUser;
+  if (isAdmin(user)) {
+    return res.json(orders);
+  }
+
+  const ownOrders = orders.filter((order: any) => String(order.userId) === String(user.id));
+  return res.json(ownOrders);
 });
 
-app.post("/api/pedidos", (req: any, res: any) => {
+app.post("/api/pedidos", requireAuth, (req: any, res: any) => {
+  const user = req.authUser;
   const clienteId = req.body.clienteId ?? null;
   const rawItems = req.body.itens ?? req.body.items;
 
@@ -347,6 +374,7 @@ app.post("/api/pedidos", (req: any, res: any) => {
   const total = itens.reduce((acc: number, item: any) => acc + item.preco * item.quantidade, 0);
   const order = {
     id: Date.now(),
+    userId: user.id,
     clienteId,
     total,
     status: "PENDENTE",
@@ -357,20 +385,26 @@ app.post("/api/pedidos", (req: any, res: any) => {
   return res.status(201).json(order);
 });
 
-app.get("/api/pedidos/:id", (req: any, res: any) => {
+app.get("/api/pedidos/:id", requireAuth, (req: any, res: any) => {
   const order = orders.find((o: any) => o.id.toString() === req.params.id);
   if (!order) return res.status(404).json({ error: "Pedido não encontrado" });
+
+  const user = req.authUser;
+  if (!isAdmin(user) && String(order.userId) !== String(user.id)) {
+    return res.status(403).json({ success: false, error: "Acesso restrito ao pedido do próprio usuário" });
+  }
+
   return res.json(order);
 });
 
-app.put("/api/pedidos/:id/status", (req: any, res: any) => {
+app.put("/api/pedidos/:id/status", requireAuth, requireAdmin, (req: any, res: any) => {
   const order = orders.find((o: any) => o.id.toString() === req.params.id);
   if (!order) return res.status(404).json({ error: "Pedido não encontrado" });
   order.status = req.body.status || order.status;
   return res.json(order);
 });
 
-app.delete("/api/pedidos/:id", (req: any, res: any) => {
+app.delete("/api/pedidos/:id", requireAuth, requireAdmin, (req: any, res: any) => {
   const idx = orders.findIndex((o: any) => o.id.toString() === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Pedido não encontrado" });
   orders.splice(idx, 1);

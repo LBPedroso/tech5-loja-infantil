@@ -16,7 +16,6 @@ Segue a entrega do projeto **Lili&Gu Moda Infantil**, desenvolvido ao longo do a
 - Diagramas de atividades: [docs/05-atividades.md](docs/05-atividades.md)
 - Diagramas de sequencia: [docs/06-sequencia.md](docs/06-sequencia.md)
 - Perfis e permissoes: [docs/07-perfis-e-permissoes.md](docs/07-perfis-e-permissoes.md)
-- Matriz de avaliacao da rubrica: [docs/08-planilha-rubrica-tech7.md](docs/08-planilha-rubrica-tech7.md)
 
 ## Observacao de maturidade do produto
 O projeto foi priorizado para entrega academica com qualidade e estabilidade dos fluxos principais. A evolucao pos-entrega (fase comercial) ja foi planejada para aprofundar regras avancadas de operacao da loja.

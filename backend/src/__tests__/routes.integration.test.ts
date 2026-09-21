@@ -37,11 +37,11 @@ describe("Integracao de rotas principais", () => {
     expect(Array.isArray(response.body)).toBe(true);
   });
 
-  it("GET /api/pedidos sem token deve retornar lista", async () => {
+  it("GET /api/pedidos sem token deve retornar 401", async () => {
     const response = await request(app).get("/api/pedidos");
 
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
   });
 
   it("GET /api/financeiro/resumo deve retornar 404", async () => {

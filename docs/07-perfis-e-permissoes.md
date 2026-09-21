@@ -20,12 +20,12 @@ Permissoes:
 ## 2.2 Usuario operacional
 Perfil com acesso restrito para operacao assistida.
 
-Permissoes propostas para fase academica:
+Permissoes aplicadas:
 - Consultar informacoes operacionais necessarias.
 - Criar pedidos sob regras definidas.
 - Sem acesso a configuracoes criticas de administracao.
 
-Restricoes propostas:
+Restricoes aplicadas:
 - Nao excluir categorias/produtos.
 - Nao alterar configuracoes administrativas.
 - Nao executar acoes sensiveis sem autorizacao.
@@ -38,6 +38,9 @@ Restricoes propostas:
 - Fluxo de login validado em producao.
 - Acesso a modulos condicionado a sessao autenticada.
 - Endpoints de upload protegidos por token.
+- Rotas de gestao de categorias e produtos protegidas para ADMIN.
+- Usuario comum autenticado cria e consulta pedidos proprios.
+- Atualizacao de status e exclusao de pedidos restritas ao ADMIN.
 
 ## 5. Evolucao recomendada pos-entrega
 Para consolidar RBAC completo em fase comercial:

@@ -3,6 +3,7 @@ export interface User {
   email: string;
   nome: string;
   cpf: string;
+  role?: 'ADMIN' | 'USER';
 }
 
 export interface AuthContextType {
