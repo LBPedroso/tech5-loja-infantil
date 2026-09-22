@@ -139,7 +139,7 @@ const ProdutoForm: React.FC<ProdutoFormProps> = ({ produto, onSalvar, onCancelar
   useEffect(() => {
     api.get('/categorias', { params: { page: 1, limit: 100 } })
       .then((res) => {
-        const payload = res.data?.data
+        const payload = res.data?.data ?? res.data
         const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
         setCategorias(data)
       })
