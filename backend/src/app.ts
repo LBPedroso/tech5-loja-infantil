@@ -378,9 +378,8 @@ app.put("/api/produtos/:id", requireAuth, requireRoles(["ADMIN", "ESTOQUE"]), (r
   prod.preco = req.body.preco ?? prod.preco;
   prod.custo = req.body.custo ?? prod.custo;
   prod.quantidade = req.body.quantidade ?? prod.quantidade;
-  prod.categoriaId = req.body.categoriaId ?? prod.categoriaId;
-
-  if (req.body.categoriaId) {
+  if (Object.prototype.hasOwnProperty.call(req.body, "categoriaId")) {
+    prod.categoriaId = req.body.categoriaId || null;
     const categoria = categories.find((c: any) => c.id.toString() === String(req.body.categoriaId));
     prod.categoria = categoria || null;
   }
