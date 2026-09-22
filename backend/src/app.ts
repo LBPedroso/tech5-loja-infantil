@@ -304,9 +304,9 @@ app.get("/api/categorias", requireAuth, (req: any, res: any) => {
 });
 
 app.post("/api/categorias", requireAuth, requireRoles(["ADMIN", "ESTOQUE"]), (req: any, res: any) => {
-  const { nome } = req.body;
+  const { nome, descricao } = req.body;
   if (!nome) return res.status(400).json({ error: "Nome obrigatório" });
-  const categoria = { id: Date.now(), nome };
+  const categoria = { id: Date.now(), nome, descricao: descricao || null };
   categories.push(categoria);
   return res.status(201).json(categoria);
 });
@@ -321,6 +321,7 @@ app.put("/api/categorias/:id", requireAuth, requireRoles(["ADMIN", "ESTOQUE"]), 
   const cat = categories.find((c: any) => c.id.toString() === req.params.id);
   if (!cat) return res.status(404).json({ error: "Categoria não encontrada" });
   cat.nome = req.body.nome || cat.nome;
+  cat.descricao = req.body.descricao ?? cat.descricao;
   return res.json(cat);
 });
 
